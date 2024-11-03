@@ -1,39 +1,45 @@
-const {response} = require('express');
-const mongoose = require('mongoose'); 
+const { response } = require('express');
 const { generarJWT } = require('../helpers/generar-jwt');
-const {usuarioSchema} = require('../schemas/schemas');
+const connection  = require('../models/database');
 
-
-// Creación de Modelo
-const Usuario = mongoose.model('Usuarios',usuarioSchema);
 
 /**
- * Define la funcionalidad para buscar un usuario en mongo con correo y password indicados
+ * Define la funcionalidad para buscar un usuario en MySQL con correo y password indicados
  * @param {*} req 
  * @param {*} res 
  */
-const login = (async(req, res = response)=>{
-    try{
-        const {correo, password} = req.body;
-        const usuario = await Usuario.findOne({correo, password});
-        console.log(`\nEl usuario ${correo} se está intentando loguear...`);
-        if(usuario){
-            console.log(`Login correcto.`);
-            //Se genera un JWT con el ID del usuario creado
-            const token = await generarJWT(usuario._id);
-            //Se envía el token en el encabezado de la respuesta
-            res.header('x-token', token);
-            console.log(`Token enviado en el header: ${token}`);
-            //Se envía el usuario en la respuesta
-            res.json(usuario);
-        }else{
-            res.status(401).json({mensaje: 'Credenciales inválidas'});
-        }
-    }catch(error){
-        console.error('Error en el logueo de usuario', error);
-        res.status(500).json({mensaje: 'Error interno en el servidor'});
+const login = async (req, res = response) => {
+  try {
+    const { correo, password } = req.body;
 
+    console.log(`\nEl usuario ${correo}, y contraseña ${password} se está intentando loguear...`);
+
+
+    //Ejecutar la consulta para encontrar el usuario
+    const [rows] = await connection.execute(
+      'SELECT * FROM usuarios WHERE correo = ?  AND contrasenia = ?',
+      [correo, password]
+    );
+
+
+    if (rows.length > 0) {
+      const usuario = rows[0];
+      console.log(`Login correcto.`);
+
+      // Genera un JWT con el ID del usuario
+      const token = await generarJWT(usuario.id); // Asegúrate de que 'id' es la columna en MySQL que identifica al usuario
+      res.header('x-token', token);
+      console.log(`Token enviado en el header: ${token}`);
+
+      // Devuelve el usuario en la respuesta
+      res.json(usuario);
+    } else {
+      res.status(401).json({ mensaje: 'Credenciales inválidas' });
     }
-});
+  } catch (error) {
+    console.error('Error en el logueo de usuario', error);
+    res.status(500).json({ mensaje: 'Error interno en el servidor' });
+  }
+};
 
-module.exports = {login};
+module.exports = { login };
