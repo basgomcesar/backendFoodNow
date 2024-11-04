@@ -12,9 +12,9 @@ const {
 
 const router = Router();
 
-router.get('/get_all', get_all_usuarios); 
-router.get('/get_by_id_body', get_usuario_by_id_body); 
-router.post('/save', save_usuario);
+router.get('', get_all_usuarios); 
+router.get('/:idUsuario', get_usuario_by_id_body); 
+router.post('/', save_usuario);
 router.put('/update/:idUsuario', update_usuario);
 router.delete('/delete/:idUsuario',[validarJWT], delete_usuario);
 
