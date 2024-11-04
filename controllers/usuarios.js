@@ -1,12 +1,16 @@
 const { response } = require('express');
 const connection = require('../models/database');
+const bcrypt = require('bcryptjs');
+// npm install bcryptjs
+
+
 
 /**
  * Obtiene lista de todos los usuarios de la base de datos
  * @param {*} req 
  * @param {*} res 
  */
-const get_all_usuarios = async (req, res = response) => {
+/*const get_all_usuarios = async (req, res = response) => {
     try {
       const [usuarios] = await connection.execute('SELECT * FROM usuarios');
       res.json({ usuarios });
@@ -15,7 +19,7 @@ const get_all_usuarios = async (req, res = response) => {
       console.error('Error al obtener usuarios: ', error);
       res.status(500).json({ error: 'Error Interno del Servidor' });
     }
-  };
+  };*/
 
 /**
  * Registra un usuario en base de datos
@@ -26,9 +30,13 @@ const save_usuario = async (req, res = response) => {
     try {
         const { nombre, correo, contrasenia, tipo, disponibilidad, foto } = req.body;
 
+        // Encripta la contraseña antes de guardarla
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(contrasenia, salt);
+
         const [resultado] = await connection.execute(
             'INSERT INTO usuarios (nombre, correo, contrasenia, tipo, disponibilidad, foto) VALUES (?, ?, ?, ?, ?, ?)',
-            [nombre, correo, contrasenia, tipo, disponibilidad, foto]
+            [nombre, correo, hashedPassword, tipo, disponibilidad, foto]
         );
 
         res.status(201).json({
@@ -53,9 +61,9 @@ const save_usuario = async (req, res = response) => {
  * @param {*} res 
  * @returns 
  */
-const get_usuario_by_id_body = async (req, res = response) => {
+const get_usuario_by_id_params = async (req, res = response) => {
     try {
-        const { idUsuario } = req.body;
+        const { idUsuario } = req.params; // Cambiado a obtener idUsuario de los parámetros de la ruta
         if (!idUsuario) {
             return res.status(400).json({ mensaje: 'Requiere de un ID' });
         }
@@ -73,6 +81,7 @@ const get_usuario_by_id_body = async (req, res = response) => {
 };
 
 
+
 /**
  * Actualiza a un usuario, el _id del usuario viene en el cuerpo de la solicitud
  * @param {*} req 
@@ -81,15 +90,8 @@ const get_usuario_by_id_body = async (req, res = response) => {
  */
 const update_usuario = async (req, res = response) => {
     try {
-        const { idUsuario } = req.params; // Extraer idUsuario de los parámetros de la ruta
+        const { idUsuario } = req.params;
         const { nombre, correo, contrasenia, tipo, disponibilidad, foto } = req.body;
-
-        // Verifica que al menos un campo de actualización esté presente
-        if (!idUsuario || (!nombre && !correo && !contrasenia && !tipo && disponibilidad === undefined && foto === undefined)) {
-            return res.status(400).json({
-                mensaje: 'Se requiere proporcionar ID de usuario y al menos un campo a actualizar (nombre, correo, contrasenia, tipo, disponibilidad, foto)',
-            });
-        }
 
         // Construcción de la consulta dinámica
         const updates = [];
@@ -104,8 +106,11 @@ const update_usuario = async (req, res = response) => {
             values.push(correo);
         }
         if (contrasenia) {
+            // Encripta la nueva contraseña antes de guardarla
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(contrasenia, salt);
             updates.push('contrasenia = ?');
-            values.push(contrasenia);
+            values.push(hashedPassword);
         }
         if (tipo) {
             updates.push('tipo = ?');
@@ -120,10 +125,8 @@ const update_usuario = async (req, res = response) => {
             values.push(foto);
         }
 
-        // Agregar el idUsuario a los valores
         values.push(idUsuario);
 
-        // Ejecutar la consulta de actualización
         const [resultado] = await connection.execute(
             `UPDATE usuarios SET ${updates.join(', ')} WHERE idUsuario = ?`,
             values
@@ -139,6 +142,7 @@ const update_usuario = async (req, res = response) => {
         res.status(500).json({ mensaje: 'Error interno del servidor' });
     }
 };
+
 
 
 
@@ -169,9 +173,8 @@ const delete_usuario = async (req, res = response) => {
 
 
 module.exports = {
-  get_all_usuarios,
   save_usuario,
-  get_usuario_by_id_body,
+  get_usuario_by_id_params,
   update_usuario,
   delete_usuario,
 };
