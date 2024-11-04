@@ -55,7 +55,7 @@ const save_usuario = async (req, res = response) => {
  */
 const get_usuario_by_id_body = async (req, res = response) => {
     try {
-        const { idUsuario } = req.body;
+        const { idUsuario } = req.params;
         if (!idUsuario) {
             return res.status(400).json({ mensaje: 'Requiere de un ID' });
         }
