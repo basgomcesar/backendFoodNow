@@ -28,6 +28,8 @@ const login = async (req, res = response) => {
 
       // Genera un JWT con el ID del usuario
       const token = await generarJWT(usuario.id); // Asegúrate de que 'id' es la columna en MySQL que identifica al usuario
+      console.log(`Token generado: ${token}`);
+      
       res.header('x-token', token);
       console.log(`Token enviado en el header: ${token}`);
 
