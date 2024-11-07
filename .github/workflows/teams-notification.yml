@@ -13,6 +13,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Paso para clonar el repositorio y permitir que se usen comandos de Git
+      - name: Checkout del repositorio
+        uses: actions/checkout@v3
+
       - name: Enviar notificación a Microsoft Teams
         env:
           TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
@@ -35,4 +39,3 @@ jobs:
             'title': 'Notificación de GitHub',
             'text': '${MESSAGE}'
           }" $TEAMS_WEBHOOK_URL
-
