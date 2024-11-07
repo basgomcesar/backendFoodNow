@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Paso para clonar el repositorio y permitir que se usen comandos de Git
+      # Step to check out the repository to use Git commands
       - name: Checkout del repositorio
         uses: actions/checkout@v3
 
@@ -21,21 +21,22 @@ jobs:
         env:
           TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
         run: |
-          EVENT_NAME=${{ github.event_name }}
-          ACTOR=${{ github.actor }}
-          REPO=${{ github.repository }}
-          BRANCH=${{ github.ref_name }}
+          EVENT_NAME="${{ github.event_name }}"
+          ACTOR="${{ github.actor }}"
+          REPO="${{ github.repository }}"
+          # Extract the branch name from the ref
+          BRANCH="${GITHUB_REF##*/}"
           COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')
 
           if [ "$EVENT_NAME" == "push" ]; then
             MESSAGE="🚀 Nuevo push en la rama ${BRANCH} del repositorio ${REPO} por ${ACTOR}: ${COMMIT_MESSAGE}"
           elif [ "$EVENT_NAME" == "pull_request" ]; then
-            PR_ACTION=${{ github.event.action }}
-            PR_TITLE=${{ github.event.pull_request.title }}
+            PR_ACTION="${{ github.event.action }}"
+            PR_TITLE="${{ github.event.pull_request.title }}"
             MESSAGE="📌 Pull request ${PR_ACTION} en la rama ${BRANCH} del repositorio ${REPO} por ${ACTOR}: ${PR_TITLE}"
           fi
 
           curl -H "Content-Type: application/json" -d "{
             \"title\": \"Notificación de GitHub\",
             \"text\": \"${MESSAGE}\"
-          }" $TEAMS_WEBHOOK_URL
+          }" "$TEAMS_WEBHOOK_URL"
