@@ -1,28 +1,38 @@
 name: Notificación a Microsoft Teams
 
-# Define los eventos que activarán la acción
 on:
-  push:         # Activará la notificación en cada push a cualquier rama
-    branches:   # Puedes especificar una rama, como main
+  push:
+    branches:
       - main
-  pull_request: # Activará la notificación para los eventos de PR (open, synchronize, close)
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  send_notification:
+  notify_teams:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Notificar en Microsoft Teams
-        uses: rafaelcalleja/teams-notification-action@v1
-        with:
-          webhook-uri: ${{ secrets.TEAMS_WEBHOOK_URL }}
-          title: |
-            GitHub Notification: ${{
-              github.event_name == 'pull_request' && github.event.action == 'opened' 
-                && 'New Pull Request Opened' || 'Code Updated on Main'
-            }}
-          message: |
-            ${{ github.event_name == 'pull_request' && github.event.action == 'opened' 
-              && format('Pull request from {} to main branch.', github.actor)
-              || format('Push by {}: {}', github.actor, github.sha)
-            }}
+      - name: Enviar notificación a Microsoft Teams
+        env:
+          TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+        run: |
+          EVENT_NAME=${{ github.event_name }}
+          ACTOR=${{ github.actor }}
+          REPO=${{ github.repository }}
+          BRANCH=${{ github.ref_name }}
+          COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')
+
+          if [ "$EVENT_NAME" == "push" ]; then
+            MESSAGE="🚀 Nuevo push en la rama ${BRANCH} del repositorio ${REPO} por ${ACTOR}: ${COMMIT_MESSAGE}"
+          elif [ "$EVENT_NAME" == "pull_request" ]; then
+            PR_ACTION=${{ github.event.action }}
+            PR_TITLE=${{ github.event.pull_request.title }}
+            MESSAGE="📌 Pull request ${PR_ACTION} en la rama ${BRANCH} del repositorio ${REPO} por ${ACTOR}: ${PR_TITLE}"
+          fi
+
+          curl -H "Content-Type: application/json" -d "{
+            'title': 'Notificación de GitHub',
+            'text': '${MESSAGE}'
+          }" $TEAMS_WEBHOOK_URL
+
