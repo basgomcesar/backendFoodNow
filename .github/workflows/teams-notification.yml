@@ -36,6 +36,6 @@ jobs:
           fi
 
           curl -H "Content-Type: application/json" -d "{
-            'title': 'Notificación de GitHub',
-            'text': '${MESSAGE}'
+            \"title\": \"Notificación de GitHub\",
+            \"text\": \"${MESSAGE}\"
           }" $TEAMS_WEBHOOK_URL
