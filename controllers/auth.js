@@ -10,15 +10,15 @@ const connection  = require('../models/database');
  */
 const login = async (req, res = response) => {
   try {
-    const { correo, password } = req.body;
+    const { correo, contrasenia } = req.body;
 
-    console.log(`\nEl usuario ${correo}, y contraseña ${password} se está intentando loguear...`);
+    console.log(`\nEl usuario ${correo}, y contraseña ${contrasenia} se está intentando loguear...`);
 
 
     //Ejecutar la consulta para encontrar el usuario
     const [rows] = await connection.execute(
       'SELECT * FROM usuarios WHERE correo = ?  AND contrasenia = ?',
-      [correo, password]
+      [correo, contrasenia]
     );
 
 
@@ -29,7 +29,6 @@ const login = async (req, res = response) => {
       // Genera un JWT con el ID del usuario
       const token = await generarJWT(usuario.id); // Asegúrate de que 'id' es la columna en MySQL que identifica al usuario
       res.header('x-token', token);
-      console.log(`Token enviado en el header: ${token}`);
 
       // Devuelve el usuario en la respuesta
       res.json(usuario);
