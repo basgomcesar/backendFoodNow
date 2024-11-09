@@ -1,7 +1,6 @@
 const {Router} = require('express');
 
 const { 
-    get_all_usuarios,
     save_usuario,
     get_usuario_by_id_params,
     update_usuario,
@@ -11,8 +10,7 @@ const {
 const {validarJWT} = require('../helpers/validar-jwt');
 
 const router = Router();
-
-router.get('', get_all_usuarios); 
+ 
 router.get('/:idUsuario', [validarJWT], get_usuario_by_id_params); 
 router.post('/', save_usuario);
 router.put('/:idUsuario', [validarJWT], update_usuario);
