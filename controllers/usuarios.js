@@ -30,13 +30,9 @@ const save_usuario = async (req, res = response) => {
     try {
         const { nombre, correo, contrasenia, tipo, disponibilidad, foto } = req.body;
 
-        // Encripta la contraseña antes de guardarla
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(contrasenia, salt);
-
         const [resultado] = await connection.execute(
             'INSERT INTO usuarios (nombre, correo, contrasenia, tipo, disponibilidad, foto) VALUES (?, ?, ?, ?, ?, ?)',
-            [nombre, correo, hashedPassword, tipo, disponibilidad, foto]
+            [nombre, correo, contrasenia, tipo, disponibilidad, foto]
         );
 
         res.status(201).json({
@@ -52,6 +48,7 @@ const save_usuario = async (req, res = response) => {
         res.status(400).json({ error: 'Error al guardar el usuario' });
     }
 };
+
 
   
 
