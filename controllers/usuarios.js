@@ -40,6 +40,7 @@ const save_usuario = async (req, res = response) => {
             nombre,
             correo,
             tipo,
+            contrasenia,
             disponibilidad, 
             foto: foto || null
         });
