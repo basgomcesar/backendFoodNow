@@ -29,7 +29,7 @@ const bcrypt = require('bcryptjs');
 const save_usuario = async (req, res = response) => {
     try {
         const { nombre, correo, contrasenia, tipo, disponibilidad, foto } = req.body;
-
+        console.log("Datos del usuario:\n", nombre, correo, contrasenia, tipo, disponibilidad);
         const [resultado] = await connection.execute(
             'INSERT INTO usuarios (nombre, correo, contrasenia, tipo, disponibilidad, foto) VALUES (?, ?, ?, ?, ?, ?)',
             [nombre, correo, contrasenia, tipo, disponibilidad, foto]
