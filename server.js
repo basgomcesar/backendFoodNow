@@ -2,7 +2,9 @@ const express = require('express');
 //const bodyParser = require('body-parser'); 
 const cookieParser = require('cookie-parser');
 const cors = require('cors'); 
+const startGrpcServer = require('./configRPC/grpc/grpcServer');
 require("dotenv").config();
+
 
 /**
  * Definición de las opciones de Cors
@@ -40,3 +42,5 @@ const PORT = 3000;
 app.listen(PORT, ()=>{
     console.log(`\nServidor esta escuchando en puerto ${PORT}`);
 });
+// Iniciar el servidor gRPC
+startGrpcServer();
