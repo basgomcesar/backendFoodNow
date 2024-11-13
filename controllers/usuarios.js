@@ -168,6 +168,30 @@ const delete_usuario = async (req, res = response) => {
     }
 };
 
+const change_disponibility = async (req, res = response) => {
+    try {
+        const { idUsuario } = req.params;
+        const { disponibilidad } = req.body;
+
+        if (disponibilidad === undefined) {
+            return res.status(400).json({ mensaje: 'Se requiere el valor de disponibilidad' });
+        }
+
+        const [resultado] = await connection.execute(
+            'UPDATE usuarios SET disponibilidad = ? WHERE idUsuario = ?',
+            [disponibilidad, idUsuario]
+        );
+
+        if (resultado.affectedRows === 0) {
+            return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+        }
+
+        res.status(200).json({ mensaje: 'Disponibilidad actualizada correctamente' });
+    } catch (error) {
+        console.error('Error al cambiar disponibilidad: ', error);
+        res.status(500).json({ mensaje: 'Error interno del servidor' });
+    }
+};
 
 
 module.exports = {
@@ -175,4 +199,5 @@ module.exports = {
   get_usuario_by_id_params,
   update_usuario,
   delete_usuario,
+  change_disponibility,
 };
