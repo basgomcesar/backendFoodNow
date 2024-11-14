@@ -89,9 +89,8 @@ const get_usuario_by_id_params = async (req, res = response) => {
 const update_usuario = async (req, res = response) => {
     try {
         const { idUsuario } = req.params;
-        const { nombre, correo, contrasenia, tipo, disponibilidad, foto } = req.body;
+        const { nombre, correo, contrasenia, foto } = req.body;
 
-        // Construcción de la consulta dinámica
         const updates = [];
         const values = [];
 
@@ -104,19 +103,8 @@ const update_usuario = async (req, res = response) => {
             values.push(correo);
         }
         if (contrasenia) {
-            // Encripta la nueva contraseña antes de guardarla
-            const salt = await bcrypt.genSalt(10);
-            const hashedPassword = await bcrypt.hash(contrasenia, salt);
             updates.push('contrasenia = ?');
-            values.push(hashedPassword);
-        }
-        if (tipo) {
-            updates.push('tipo = ?');
-            values.push(tipo);
-        }
-        if (disponibilidad !== undefined) {
-            updates.push('disponibilidad = ?');
-            values.push(disponibilidad);
+            values.push(contrasenia);
         }
         if (foto) {
             updates.push('foto = ?');
@@ -133,14 +121,29 @@ const update_usuario = async (req, res = response) => {
         if (resultado.affectedRows === 0) {
             res.status(404).json({ mensaje: 'Usuario no fue encontrado' });
         } else {
-            res.json({ mensaje: 'Usuario actualizado correctamente' });
+            // Consulta el usuario actualizado y envía la respuesta en el mismo formato que `save_usuario`
+            const [usuarioActualizado] = await connection.execute(
+                'SELECT idUsuario, nombre, correo, contrasenia, tipo, disponibilidad, foto FROM usuarios WHERE idUsuario = ?',
+                [idUsuario]
+            );
+            
+            // Devolvemos los datos completos del usuario actualizado
+            res.status(200).json({
+                idUsuario: usuarioActualizado[0].idUsuario,
+                nombre: usuarioActualizado[0].nombre,
+                correo: usuarioActualizado[0].correo,
+                contrasenia: usuarioActualizado[0].contrasenia,
+                tipo: usuarioActualizado[0].tipo, // asegúrate de que este campo exista en la tabla
+                disponibilidad: usuarioActualizado[0].disponibilidad, // asegúrate de que este campo exista en la tabla
+                foto: usuarioActualizado[0].foto || null,
+                mensaje: 'Usuario actualizado correctamente'
+            });
         }
     } catch (error) {
         console.error('Error al actualizar usuario: ', error);
         res.status(500).json({ mensaje: 'Error interno del servidor' });
     }
 };
-
 
 
 
