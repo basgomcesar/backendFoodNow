@@ -29,24 +29,34 @@ const bcrypt = require('bcryptjs');
 const save_usuario = async (req, res = response) => {
     try {
         const { nombre, correo, contrasenia, tipo, disponibilidad, foto } = req.body;
-        console.log("Datos del usuario:\n", nombre, correo, contrasenia, tipo, disponibilidad);
+        console.log("Datos del usuario:\n", nombre, correo, contrasenia, tipo, disponibilidad, foto);
+
         const [resultado] = await connection.execute(
             'INSERT INTO usuarios (nombre, correo, contrasenia, tipo, disponibilidad, foto) VALUES (?, ?, ?, ?, ?, ?)',
             [nombre, correo, contrasenia, tipo, disponibilidad, foto]
         );
 
-        res.status(201).json({
+        const respuesta = {
             idUsuario: resultado.insertId,
             nombre,
             correo,
             tipo,
             contrasenia,
-            disponibilidad, 
+            disponibilidad,
             foto: foto || null
-        });
+        };
+
+        // Envía la respuesta al cliente
+        res.status(201).json(respuesta);
+        console.log("Código de respuesta:", res.statusCode);
+        // Imprime la respuesta en la consola
+        console.log("Respuesta enviada al cliente:", respuesta);
     } catch (error) {
         console.error('Error al guardar usuario: ', error);
-        res.status(400).json({ error: 'Error al guardar el usuario' });
+        if (!res.headersSent) {
+            res.status(400).json({ error: 'Error al guardar el usuario' });
+            console.log("Código de respuesta:", res.statusCode);
+        }
     }
 };
 
@@ -156,20 +166,25 @@ const update_usuario = async (req, res = response) => {
  */
 const delete_usuario = async (req, res = response) => {
     try {
-        const { idUsuario } = req.params; // Extraer idUsuario de los parámetros de la ruta
+        const { idUsuario } = req.params;
+        // Validación del parámetro en Node.js antes de la consulta
+        if (!idUsuario || isNaN(idUsuario)) {
+            return res.status(400).json({ error: 'ID de usuario no válida' });
+        }
 
         const [resultado] = await connection.execute('DELETE FROM usuarios WHERE idUsuario = ?', [idUsuario]);
 
         if (resultado.affectedRows === 0) {
-            res.status(404).json({ mensaje: 'Usuario no encontrado' });
-        } else {
-            res.json({ mensaje: 'Usuario eliminado exitosamente' });
+            return res.status(404).json({ mensaje: 'Usuario no encontrado' });
         }
+
+        res.status(200).json({ mensaje: 'Usuario eliminado exitosamente' });
     } catch (error) {
         console.error('Error al eliminar usuario: ', error);
-        res.status(400).json({ error: 'Error al eliminar el usuario' });
+        res.status(500).json({ error: 'Error interno en el servidor' });
     }
 };
+
 
 const change_disponibility = async (req, res = response) => {
     try {

@@ -34,6 +34,7 @@ const login = async (req, res = response) => {
 
       // Devuelve el usuario en la respuesta
       res.json(usuario);
+      
     } else {
       res.status(401).json({ mensaje: 'Credenciales inválidas' });
     }
