@@ -76,63 +76,83 @@ const get_usuario_by_id_params = async (req, res = response) => {
  * @returns
  */
 const update_usuario = async (req, res = response) => {
-  try {
-    const { idUsuario } = req.params;
-    const { nombre, correo, contrasenia, foto } = req.body;
-
-    const updates = [];
-    const values = [];
-
-    if (nombre) {
-      updates.push("nombre = ?");
-      values.push(nombre);
-    }
-    if (correo) {
-      updates.push("correo = ?");
-      values.push(correo);
-    }
-    if (contrasenia) {
-      updates.push("contrasenia = ?");
-      values.push(contrasenia);
-    }
-    if (foto) {
-      updates.push("foto = ?");
-      values.push(foto);
-    }
-
-    values.push(idUsuario);
-
-    const [resultado] = await connection.execute(
-      `UPDATE usuarios SET ${updates.join(", ")} WHERE idUsuario = ?`,
-      values
-    );
-
-    if (resultado.affectedRows === 0) {
-      res.status(404).json({ mensaje: "Usuario no fue encontrado" });
-    } else {
-      // Consulta el usuario actualizado y envía la respuesta en el mismo formato que `save_usuario`
+    try {
+      const { idUsuario } = req.params;
+      const { nombre, correo, contrasenia, disponibilidad } = req.body;
+  
+      const updates = [];
+      const values = [];
+  
+      // Si se envía una foto, la gestionamos de manera similar a save_usuario
+      let foto = null;
+      if (req.file) {
+        foto = req.file.buffer;  // Guardamos la foto solo si está presente
+        updates.push("foto = ?");
+        values.push(foto);
+      }
+  
+      // Construcción dinámica de la consulta UPDATE para otros campos
+      if (nombre) {
+        updates.push("nombre = ?");
+        values.push(nombre);
+      }
+      if (correo) {
+        updates.push("correo = ?");
+        values.push(correo);
+      }
+      if (contrasenia) {
+        updates.push("contrasenia = ?");
+        values.push(contrasenia);
+      }
+      if (disponibilidad) {
+        const disponibilidadInt = disponibilidad === 'true' ? 1 : 0;
+        updates.push("disponibilidad = ?");
+        values.push(disponibilidadInt);
+      }
+  
+      // Si no se especifica ningún campo para actualizar
+      if (updates.length === 0) {
+        return res.status(400).json({ error: "No se ha proporcionado ningún dato para actualizar" });
+      }
+  
+      // Se añade el idUsuario al final de los valores para la condición WHERE
+      values.push(idUsuario);
+  
+      // Ejecución de la consulta de actualización
+      const [resultado] = await connection.execute(
+        `UPDATE usuarios SET ${updates.join(", ")} WHERE idUsuario = ?`,
+        values
+      );
+  
+      // Verificación de que el usuario existe
+      if (resultado.affectedRows === 0) {
+        return res.status(404).json({ mensaje: "Usuario no encontrado" });
+      }
+  
+      // Consulta el usuario actualizado
       const [usuarioActualizado] = await connection.execute(
         "SELECT idUsuario, nombre, correo, contrasenia, tipo, disponibilidad, foto FROM usuarios WHERE idUsuario = ?",
         [idUsuario]
       );
-
-      // Devolvemos los datos completos del usuario actualizado
+  
+      // Respuesta con los datos del usuario actualizado
       res.status(200).json({
         idUsuario: usuarioActualizado[0].idUsuario,
         nombre: usuarioActualizado[0].nombre,
         correo: usuarioActualizado[0].correo,
         contrasenia: usuarioActualizado[0].contrasenia,
-        tipo: usuarioActualizado[0].tipo, // asegúrate de que este campo exista en la tabla
-        disponibilidad: usuarioActualizado[0].disponibilidad, // asegúrate de que este campo exista en la tabla
+        tipo: usuarioActualizado[0].tipo, // asegurarse de que este campo exista en la tabla
+        disponibilidad: usuarioActualizado[0].disponibilidad, // asegurarse de que este campo exista en la tabla
         foto: usuarioActualizado[0].foto || null,
         mensaje: "Usuario actualizado correctamente",
       });
+    } catch (error) {
+      console.error("Error al actualizar usuario: ", error);
+      res.status(500).json({ mensaje: "Error interno del servidor" });
     }
-  } catch (error) {
-    console.error("Error al actualizar usuario: ", error);
-    res.status(500).json({ mensaje: "Error interno del servidor" });
-  }
-};
+  };
+  
+  
 
 /**
  * Elimina usuario
