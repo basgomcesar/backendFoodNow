@@ -30,7 +30,6 @@ app.use(cookieParser());
 
 // Se definen las rutas de los servicios que ofrece el API
 app.use('/usuarios', require('./routes/usuarios'));
-app.use('/photos', require('./routes/photos'));
 app.use('/auth', require('./routes/auth'));
 app.use('/utils', require('./routes/utils'));
   
