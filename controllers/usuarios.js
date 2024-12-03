@@ -22,6 +22,18 @@ const save_usuario = async (req, res = response) => {
     }
     const foto = req.file.buffer;
 
+    // Verificar si el correo ya está registrado
+    const [existingUser] = await connection.execute(
+      "SELECT * FROM usuarios WHERE correo = ?",
+      [correo]
+    );
+
+    // Si el correo ya existe, retornar un error
+    if (existingUser.length > 0) {
+      return res.status(409).json({ error: "El correo ya está registrado" });
+    }
+
+    // Si el correo no existe, guardar el nuevo usuario
     const [resultado] = await connection.execute(
       "INSERT INTO usuarios (nombre, correo, contrasenia, tipo, disponibilidad, foto) VALUES (?, ?, ?, ?, ?, ?)",
       [nombre, correo, contrasenia, tipo, disponibilidadInt, foto]
@@ -41,6 +53,7 @@ const save_usuario = async (req, res = response) => {
     res.status(400).json({ error: "Error al guardar el usuario" });
   }
 };
+
 
 /**
  * Obtiene un usuario por ID, el parámetro _id viene en el cuertpo de la solicitud
