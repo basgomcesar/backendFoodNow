@@ -1,6 +1,15 @@
 const {response} = require('express');
 const winston = require('winston');
+const mongoose = require('mongoose'); 
 const path = require('path'); 
+const {errorSchema} = require('../schemas/schemas');
+
+
+//Generar la Conexón a MongoDB
+mongoose.connect('mongodb://localhost:27017/vuejs');
+
+// Creación de Modelos 
+const ErrorLog = mongoose.model('ErrorLog', errorSchema);
 
 // Configuración de winston
 const logger = winston.createLogger({
