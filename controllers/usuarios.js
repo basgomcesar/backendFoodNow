@@ -246,10 +246,78 @@ const change_disponibility = async (req, res = response) => {
   }
 };
 
+const update_availability = async (req, res = response) => {
+  try {
+    const { idUsuario } = req.params;
+    const { disponibilidad, ubicacion } = req.body;
+
+    console.log(req.body); // Verifica los datos que recibes
+
+    // Validamos los datos de entrada
+    if (disponibilidad === undefined && ubicacion === undefined) {
+      return res
+        .status(400)
+        .json({ error: "Se debe proporcionar al menos un campo para actualizar" });
+    }
+
+    const updates = [];
+    const values = [];
+
+    // Solo agregamos los campos si están definidos
+    if (disponibilidad !== undefined) {
+      const disponibilidadBool = disponibilidad === 'true' || disponibilidad === true; // Asegura que el valor sea booleano
+      updates.push("disponibilidad = ?");
+      values.push(disponibilidadBool);
+    }
+
+    if (ubicacion !== undefined) {
+      updates.push("ubicacion = ?");
+      values.push(ubicacion);
+    }
+
+    // Añadimos el idUsuario al final de los valores para la cláusula WHERE
+    values.push(idUsuario);
+
+    // Construimos y ejecutamos la consulta
+    const [resultado] = await connection.execute(
+      `UPDATE usuarios SET ${updates.join(", ")} WHERE idUsuario = ?`,
+      values
+    );
+
+    // Verificamos si se afectó alguna fila
+    if (resultado.affectedRows === 0) {
+      return res.status(404).json({ mensaje: "Usuario no encontrado" });
+    }
+
+    // Consultamos el usuario actualizado para devolver la respuesta
+    const [usuarioActualizado] = await connection.execute(
+      "SELECT idUsuario, nombre, correo, contrasenia, tipo, disponibilidad, ubicacion FROM usuarios WHERE idUsuario = ?",
+      [idUsuario]
+    );
+
+    // Respondemos con los datos del usuario actualizado
+    res.status(200).json({
+      idUsuario: usuarioActualizado[0].idUsuario,
+      nombre: usuarioActualizado[0].nombre,
+      correo: usuarioActualizado[0].correo,
+      contrasenia: usuarioActualizado[0].contrasenia,
+      tipo: usuarioActualizado[0].tipo,
+      disponibilidad: usuarioActualizado[0].disponibilidad,
+      ubicacion: usuarioActualizado[0].ubicacion,
+      mensaje: "Usuario actualizado correctamente",
+    });
+  } catch (error) {
+    console.error("Error al actualizar usuario: ", error);
+    res.status(500).json({ mensaje: "Error interno del servidor" });
+  }
+};
+
+
 module.exports = {
   save_usuario,
   get_usuario_by_id_params,
   update_usuario,
   delete_usuario,
   change_disponibility,
+  update_availability
 };

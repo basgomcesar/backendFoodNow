@@ -12,6 +12,7 @@ const validarJWT = (req = request, res = response, next)=>{
     }
 
     try{
+        console.log(token, SECRET_KEY)
         const{uid} = jwt.verify(token, SECRET_KEY);
         req.uid = uid;
         console.log(uid)
