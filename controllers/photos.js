@@ -1,9 +1,9 @@
 const {response} = require('express');
-const mongoose = require('mongoose'); 
+//const mongoose = require('mongoose'); 
 const {photoSchema} = require('../schemas/schemas');
 
 // Creación de Modelos 
-const Photo = mongoose.model('Photo',photoSchema);
+//const Photo = mongoose.model('Photo',photoSchema);
 
 //Enpoint guardar foto
 const upload_photo = async (req, res = response) => {
