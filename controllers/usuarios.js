@@ -3,6 +3,9 @@ const { response } = require("express");
 const connection = require("../models/database");
 const bcrypt = require("bcryptjs");
 const upload = multer({ storage: multer.memoryStorage() });
+const { SECRET_KEY } = require('../helpers/config');
+const jwt = require('jsonwebtoken');
+
 
 /**
  * Registra un usuario en base de datos
@@ -162,23 +165,43 @@ const update_usuario = async (req, res = response) => {
  */
 const delete_usuario = async (req, res = response) => {
   try {
-    const { idUsuario } = req.params; // Extraer idUsuario de los parámetros de la ruta
+    // Obtener el token del encabezado
+    const token = req.header('x-token');
 
+    if (!token) {
+      return res.status(401).json({ error: "No se proporcionó el token" });
+    }
+
+    let uid;
+    try {
+      // Verificar y extraer el uid del token
+      ({ uid } = jwt.verify(token, SECRET_KEY));
+    } catch (error) {
+      return res.status(401).json({ error: "Token inválido o expirado" });
+    }
+
+    // Verificar que el uid extraído sea válido
+    if (!uid || isNaN(uid)) {
+      return res.status(400).json({ error: "ID de usuario inválido en el token" });
+    }
+
+    // Ejecutar la consulta para eliminar el usuario
     const [resultado] = await connection.execute(
       "DELETE FROM usuarios WHERE idUsuario = ?",
-      [idUsuario]
+      [uid]
     );
 
     if (resultado.affectedRows === 0) {
-      res.status(404).json({ mensaje: "Usuario no encontrado" });
-    } else {
-      res.json({ mensaje: "Usuario eliminado exitosamente" });
+      return res.status(404).json({ mensaje: "Usuario no encontrado" });
     }
+
+    res.json({ mensaje: "Usuario eliminado exitosamente" });
   } catch (error) {
     console.error("Error al eliminar usuario: ", error);
-    res.status(400).json({ error: "Error al eliminar el usuario" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
+
 
 
 const change_disponibility = async (req, res = response) => {
