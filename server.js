@@ -38,6 +38,7 @@ app.use('/usuarios', require('./routes/usuarios'));
 app.use('/auth', require('./routes/auth'));
 app.use('/utils', require('./routes/utils'));
 app.use('/productos', require ('./routes/productos'));
+app.use('/pedidos', require ('./routes/pedidos'));
 
 
 // Se define el puerto en el que funciona el servidor
