@@ -1,7 +1,6 @@
 const { response } = require("express");
 const connection = require("../models/database");
-const jwt = require('jsonwebtoken');
-const SECRET_KEY = require('../helpers/config');
+
 /**
  * Obtiene todos los productos asociados al usuario autenticado
  * @param {*} req
@@ -9,24 +8,11 @@ const SECRET_KEY = require('../helpers/config');
  */
 const get_productos_by_usuario = async (req, res = response) => {
   try {
-    const token = req.header('x-token');
- 
-    if (!token) {
-      return res.status(401).json({ error: "No se proporcionó el token" });
-    }
- 
-    let uid;
-    try {
-      // Verificar y extraer el uid del token
-      console.log(SECRET_KEY);
-      ({ uid } = jwt.verify(token, SECRET_KEY));
-    } catch (error) {
-      return res.status(401).json({ error: `Token inválido o expirado ${error}` });
-    }
+    const idUsuario = req.uid; // ID del usuario autenticado extraído del token
 
     const [productos] = await connection.execute(
       "SELECT * FROM productos WHERE idUsuario = ?",
-      [uid]
+      [idUsuario]
     );
 
     if (productos.length === 0) {
@@ -52,7 +38,7 @@ const get_productos_by_usuario = async (req, res = response) => {
  */
 const update_producto = async (req, res = response) => {
   try {
-    const idUsuario = req.uid; // Obtener el ID del usuario desde el token
+    const idUsuario = req.uid; // ID del usuario autenticado extraído del token
     const { idProducto } = req.params;
     const { descripcion, precio, cantidadDisponible } = req.body;
 
@@ -90,9 +76,9 @@ const update_producto = async (req, res = response) => {
 
     values.push(idProducto);
 
-    const [resultado] = await connection.execute(
-      `UPDATE productos SET ${updates.join(", ")} WHERE idProducto = ?`,
-      values
+    await connection.execute(
+      `UPDATE productos SET ${updates.join(", ")} WHERE idProducto = ? AND idUsuario = ?`,
+      [...values, idUsuario]
     );
 
     res.status(200).json({
@@ -112,9 +98,10 @@ const update_producto = async (req, res = response) => {
  */
 const delete_producto = async (req, res = response) => {
   try {
-    const idUsuario = req.uid; // Obtener el ID del usuario desde el token
+    const idUsuario = req.uid; // ID del usuario autenticado extraído del token
     const { idProducto } = req.params;
 
+    // Validar que el producto pertenece al usuario autenticado
     const [producto] = await connection.execute(
       "SELECT * FROM productos WHERE idProducto = ? AND idUsuario = ?",
       [idProducto, idUsuario]
