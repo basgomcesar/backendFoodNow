@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 
-const SECRET_KEY = crypto.randomBytes(32).toString('hex');
+const SECRET_KEY = process.env.SECRET_KEY || 'default_static_key_for_dev';
 
 try{
     console.log(`Clave generada: ${SECRET_KEY}`);
