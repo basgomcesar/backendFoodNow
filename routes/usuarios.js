@@ -10,7 +10,7 @@ const router = Router();
 
 // Rutas
 router.get('/:idUsuario', validarJWT, get_usuario_by_id_params); 
-router.post('/', upload.single('foto'), save_usuario);  // Aquí aplicamos el middleware de multer
+router.post('/', upload.single('foto'), save_usuario);  
 router.put('/:idUsuario', upload.single('foto'), validarJWT, update_usuario);
 router.delete('/', validarJWT, delete_usuario);
 router.patch('/:idUsuario', validarJWT, change_disponibility);

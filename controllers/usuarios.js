@@ -15,10 +15,16 @@ const jwt = require('jsonwebtoken');
 const save_usuario = async (req, res = response) => {
   try {
     const { nombre, correo, contrasenia, tipo, disponibilidad } = req.body;
+
+    // Convertir disponibilidad a número
     const disponibilidadInt = disponibilidad === 'true' ? 1 : 0;
 
+    // Validar que se haya subido un archivo de foto
     if (!req.file) {
-      return res.status(400).json({ error: "Se requiere una foto de usuario" });
+      return res.status(400).json({
+        success: false,
+        error: "Se requiere una foto de usuario",
+      });
     }
     const foto = req.file.buffer;
 
@@ -28,31 +34,40 @@ const save_usuario = async (req, res = response) => {
       [correo]
     );
 
-    // Si el correo ya existe, retornar un error
     if (existingUser.length > 0) {
-      return res.status(409).json({ error: "El correo ya está registrado" });
+      return res.status(409).json({
+        success: false,
+        error: "El correo ya está registrado",
+      });
     }
 
-    // Si el correo no existe, guardar el nuevo usuario
+    // Guardar el nuevo usuario
     const [resultado] = await connection.execute(
       "INSERT INTO usuarios (nombre, correo, contrasenia, tipo, disponibilidad, foto) VALUES (?, ?, ?, ?, ?, ?)",
       [nombre, correo, contrasenia, tipo, disponibilidadInt, foto]
     );
 
-    res.status(201).json({
-      idUsuario: resultado.insertId,
-      nombre,
-      correo,
-      tipo,
-      contrasenia,
-      disponibilidad,
-      foto: foto || null,
-    });
+    // Confirmar que el usuario fue guardado exitosamente
+    if (resultado.affectedRows > 0) {
+      return res.status(201).json({
+        success: true,
+        message: "Usuario creado con éxito",
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        error: "No se pudo crear el usuario",
+      });
+    }
   } catch (error) {
-    console.error("Error al guardar usuario: ", error);
-    res.status(400).json({ error: "Error al guardar el usuario" });
+    console.error("Error al guardar usuario: ", error.message || error);
+    res.status(500).json({
+      success: false,
+      error: "Error interno del servidor al guardar el usuario",
+    });
   }
 };
+
 
 
 /**
@@ -152,7 +167,7 @@ const update_usuario = async (req, res = response) => {
       );
   
       // Respuesta con los datos del usuario actualizado
-      res.status(200).json({
+      return res.status(200).json({
         idUsuario: usuarioActualizado[0].idUsuario,
         nombre: usuarioActualizado[0].nombre,
         correo: usuarioActualizado[0].correo,
