@@ -107,82 +107,115 @@ const get_usuario_by_id_params = async (req, res = response) => {
  * @returns
  */
 const update_usuario = async (req, res = response) => {
-    try {
-      const { idUsuario } = req.params;
-      const { nombre, correo, contrasenia, disponibilidad } = req.body;
-  
-      const updates = [];
-      const values = [];
-  
-      // Si se envía una foto, la gestionamos de manera similar a save_usuario
-      let foto = null;
-      if (req.file) {
-        foto = req.file.buffer;  // Guardamos la foto solo si está presente
-        updates.push("foto = ?");
-        values.push(foto);
-      }
-  
-      // Construcción dinámica de la consulta UPDATE para otros campos
-      if (nombre) {
-        updates.push("nombre = ?");
-        values.push(nombre);
-      }
-      if (correo) {
-        updates.push("correo = ?");
-        values.push(correo);
-      }
-      if (contrasenia) {
-        updates.push("contrasenia = ?");
-        values.push(contrasenia);
-      }
-      if (disponibilidad) {
-        const disponibilidadInt = disponibilidad === 'true' ? 1 : 0;
-        updates.push("disponibilidad = ?");
-        values.push(disponibilidadInt);
-      }
-  
-      // Si no se especifica ningún campo para actualizar
-      if (updates.length === 0) {
-        return res.status(400).json({ error: "No se ha proporcionado ningún dato para actualizar" });
-      }
-  
-      // Se añade el idUsuario al final de los valores para la condición WHERE
-      values.push(idUsuario);
-  
-      // Ejecución de la consulta de actualización
-      const [resultado] = await connection.execute(
-        `UPDATE usuarios SET ${updates.join(", ")} WHERE idUsuario = ?`,
-        values
+  try {
+    const { idUsuario } = req.params;
+    const { nombre, correo, contrasenia, disponibilidad } = req.body;
+
+    // Convertir disponibilidad a número
+    const disponibilidadInt = disponibilidad === 'true' ? 1 : 0;
+
+    // Validar que se haya subido un archivo de foto (si aplica)
+    let foto = null;
+    if (req.file) {
+      foto = req.file.buffer;
+    }
+
+    // Construcción dinámica de la consulta UPDATE
+    const updates = [];
+    const values = [];
+
+    if (nombre) {
+      updates.push("nombre = ?");
+      values.push(nombre);
+    }
+
+    if (correo) {
+      // Verificar si el correo ya está registrado por otro usuario
+      const [existingUser] = await connection.execute(
+        "SELECT * FROM usuarios WHERE correo = ? AND idUsuario != ?",
+        [correo, idUsuario]
       );
-  
-      // Verificación de que el usuario existe
-      if (resultado.affectedRows === 0) {
-        return res.status(404).json({ mensaje: "Usuario no encontrado" });
+
+      if (existingUser.length > 0) {
+        return res.status(409).json({
+          success: false,
+          error: "El correo ya está registrado por otro usuario",
+        });
       }
-  
-      // Consulta el usuario actualizado
-      const [usuarioActualizado] = await connection.execute(
-        "SELECT idUsuario, nombre, correo, contrasenia, tipo, disponibilidad, foto FROM usuarios WHERE idUsuario = ?",
-        [idUsuario]
-      );
-  
-      // Respuesta con los datos del usuario actualizado
-      return res.status(200).json({
+
+      updates.push("correo = ?");
+      values.push(correo);
+    }
+
+    if (contrasenia) {
+      updates.push("contrasenia = ?");
+      values.push(contrasenia);
+    }
+
+    if (disponibilidad) {
+      updates.push("disponibilidad = ?");
+      values.push(disponibilidadInt);
+    }
+
+    if (foto) {
+      updates.push("foto = ?");
+      values.push(foto);
+    }
+
+    // Verificar que haya campos para actualizar
+    if (updates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "No se ha proporcionado ningún dato para actualizar",
+      });
+    }
+
+    // Agregar idUsuario al final de los valores
+    values.push(idUsuario);
+
+    // Ejecutar la consulta de actualización
+    const [resultado] = await connection.execute(
+      `UPDATE usuarios SET ${updates.join(", ")} WHERE idUsuario = ?`,
+      values
+    );
+
+    // Verificar si el usuario fue encontrado
+    if (resultado.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        error: "Usuario no encontrado",
+      });
+    }
+
+    // Consultar el usuario actualizado
+    const [usuarioActualizado] = await connection.execute(
+      "SELECT idUsuario, nombre, correo, contrasenia, tipo, disponibilidad, foto FROM usuarios WHERE idUsuario = ?",
+      [idUsuario]
+    );
+
+    // Responder con los datos del usuario actualizado
+    return res.status(200).json({
+      success: true,
+      message: "Usuario actualizado correctamente",
+      usuario: {
         idUsuario: usuarioActualizado[0].idUsuario,
         nombre: usuarioActualizado[0].nombre,
         correo: usuarioActualizado[0].correo,
         contrasenia: usuarioActualizado[0].contrasenia,
-        tipo: usuarioActualizado[0].tipo, // asegurarse de que este campo exista en la tabla
-        disponibilidad: usuarioActualizado[0].disponibilidad, // asegurarse de que este campo exista en la tabla
+        tipo: usuarioActualizado[0].tipo,
+        disponibilidad: usuarioActualizado[0].disponibilidad,
         foto: usuarioActualizado[0].foto || null,
-        mensaje: "Usuario actualizado correctamente",
-      });
-    } catch (error) {
-      console.error("Error al actualizar usuario: ", error);
-      res.status(500).json({ mensaje: "Error interno del servidor" });
-    }
-  };
-  
+      },
+    });
+  } catch (error) {
+    console.error("Error al actualizar usuario: ", error.message || error);
+    res.status(500).json({
+      success: false,
+      error: "Error interno del servidor al actualizar el usuario",
+    });
+  }
+};
+
   
 
 /**
