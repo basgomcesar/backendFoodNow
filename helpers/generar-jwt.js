@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 
 const { SECRET_KEY } = require('../helpers/config');
 
-const generarJWT = (uid = '') => {
+const generarJWT = (uid) => {
     return new Promise((resolve, reject) => {
         const payload = { uid };
         jwt.sign(payload, SECRET_KEY, {expiresIn: '2h'},
