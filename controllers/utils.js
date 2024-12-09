@@ -6,7 +6,7 @@ const {errorSchema} = require('../schemas/schemas');
 
 
 //Generar la Conexón a MongoDB
-mongoose.connect('mongodb://localhost:27017/vuejs');
+//mongoose.connect('mongodb://localhost:27017/vuejs');
 
 // Creación de Modelos 
 const ErrorLog = mongoose.model('ErrorLog', errorSchema);

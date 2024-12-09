@@ -4,11 +4,6 @@ const connection = require("../models/database");
 const bcrypt = require("bcryptjs");
 const upload = multer({ storage: multer.memoryStorage() });
 
-/**
- * Registra un usuario en base de datos
- * @param {*} req
- * @param {*} res
- */
 const save_usuario = async (req, res = response) => {
   try {
     const { nombre, correo, contrasenia, tipo, disponibilidad } = req.body;
@@ -39,12 +34,6 @@ const save_usuario = async (req, res = response) => {
   }
 };
 
-/**
- * Obtiene un usuario por ID, el parámetro _id viene en el cuertpo de la solicitud
- * @param {*} req
- * @param {*} res
- * @returns
- */
 const get_usuario_by_id_params = async (req, res = response) => {
   try {
     const { idUsuario } = req.params; // Cambiado a obtener idUsuario de los parámetros de la ruta
@@ -69,12 +58,6 @@ const get_usuario_by_id_params = async (req, res = response) => {
   }
 };
 
-/**
- * Actualiza a un usuario, el _id del usuario viene en el cuerpo de la solicitud
- * @param {*} req
- * @param {*} res
- * @returns
- */
 const update_usuario = async (req, res = response) => {
     try {
       const { idUsuario } = req.params;
@@ -152,14 +135,6 @@ const update_usuario = async (req, res = response) => {
     }
   };
   
-  
-
-/**
- * Elimina usuario
- * @param {*} req
- * @param {*} res
- * @returns mensaje de eliminación
- */
 const delete_usuario = async (req, res = response) => {
   try {
     const { idUsuario } = req.params; // Extraer idUsuario de los parámetros de la ruta
@@ -211,6 +186,8 @@ const change_disponibility = async (req, res = response) => {
 };
 
 const update_availability = async (req, res = response) => {
+  console.log('id-------')
+
   try {
     const { idUsuario } = req.params;
     const { disponibilidad, ubicacion } = req.body;
@@ -276,6 +253,35 @@ const update_availability = async (req, res = response) => {
   }
 };
 
+const get_products_offered = async (req, res = response) => {
+  try {
+    const { idUsuario } = req.params; // Obtén idUsuario desde los parámetros de la ruta
+    if (!idUsuario) {
+      return res.status(400).json({ mensaje: "Se requiere un ID de usuario" });
+    }
+
+    // Consulta para obtener todos los productos asociados al usuario
+    const [productos] = await connection.execute(
+      "SELECT idProducto, nombre, descripcion, precio, cantidadDisponible, disponible, foto, categoria, idUsuario FROM productos WHERE idUsuario = ?",
+      [idUsuario]
+    );
+
+    if (productos.length === 0) {
+      return res
+        .status(404)
+        .json({ mensaje: "No se encontraron productos para este usuario" });
+    }
+
+    // Imprime los productos obtenidos antes de enviarlos
+    console.log('Productos obtenidos:', productos);
+
+    // Devuelve la lista completa de productos
+    res.status(200).json({ productos });
+  } catch (error) {
+    console.error("Error al obtener los productos: ", error);
+    res.status(500).json({ mensaje: "Error interno del servidor" });
+  }
+};
 
 module.exports = {
   save_usuario,
@@ -283,5 +289,6 @@ module.exports = {
   update_usuario,
   delete_usuario,
   change_disponibility,
-  update_availability
+  update_availability,
+  get_products_offered
 };

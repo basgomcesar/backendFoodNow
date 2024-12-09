@@ -37,6 +37,7 @@ app.use(cookieParser());
 app.use('/usuarios', require('./routes/usuarios'));
 app.use('/photos', require('./routes/photos'));
 app.use('/auth', require('./routes/auth'));
+app.use('/products', require('./routes/products'));
 app.use('/utils', require('./routes/utils'));
 
 // Se define el puerto en el que funciona el servidor
