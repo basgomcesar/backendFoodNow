@@ -56,7 +56,7 @@ const save_usuario = async (req, res = response) => {
     } else {
       return res.status(500).json({
         success: false,
-        error: "No se pudo crear el usuario",
+        error: "No se pudo crear el usuario, verifica tus datos",
       });
     }
   } catch (error) {
