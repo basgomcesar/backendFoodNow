@@ -31,16 +31,14 @@ const corsOptions = {
 app.use(cors(corsOptions)); 
 app.use(express.json({ limit: '50mb' }));
 app.use(cookieParser());
-// app.use(bodyParser.json()); // Analizar cuerpos de solicitudes en formato JSON 
 
-// Se definen las rutas de los servicios que ofrece el API
 app.use('/usuarios', require('./routes/usuarios'));
 app.use('/auth', require('./routes/auth'));
+app.use('/products', require('./routes/products'));
 app.use('/utils', require('./routes/utils'));
 app.use('/productos', require ('./routes/productos'));
 
 
-// Se define el puerto en el que funciona el servidor
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`\nServidor está escuchando en puerto ${PORT}`);

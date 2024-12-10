@@ -7,11 +7,6 @@ const { SECRET_KEY } = require('../helpers/config');
 const jwt = require('jsonwebtoken');
 
 
-/**
- * Registra un usuario en base de datos
- * @param {*} req
- * @param {*} res
- */
 const save_usuario = async (req, res = response) => {
   try {
     const { nombre, correo, contrasenia, tipo, disponibilidad } = req.body;
@@ -68,14 +63,6 @@ const save_usuario = async (req, res = response) => {
   }
 };
 
-
-
-/**
- * Obtiene un usuario por ID, el parámetro _id viene en el cuertpo de la solicitud
- * @param {*} req
- * @param {*} res
- * @returns
- */
 const get_usuario_by_id_params = async (req, res = response) => {
   try {
     const { idUsuario } = req.params; // Cambiado a obtener idUsuario de los parámetros de la ruta
@@ -100,12 +87,6 @@ const get_usuario_by_id_params = async (req, res = response) => {
   }
 };
 
-/**
- * Actualiza a un usuario, el _id del usuario viene en el cuerpo de la solicitud
- * @param {*} req
- * @param {*} res
- * @returns
- */
 const update_usuario = async (req, res = response) => {
   try {
     const { idUsuario } = req.params;
@@ -217,13 +198,6 @@ const update_usuario = async (req, res = response) => {
 };
 
   
-
-/**
- * Elimina usuario
- * @param {*} req
- * @param {*} res
- * @returns mensaje de eliminación
- */
 const delete_usuario = async (req, res = response) => {
   try {
     // Obtener el token del encabezado
@@ -295,13 +269,13 @@ const change_disponibility = async (req, res = response) => {
 };
 
 const update_availability = async (req, res = response) => {
+
   try {
     const { idUsuario } = req.params;
     const { disponibilidad, ubicacion } = req.body;
 
-    console.log(req.body); // Verifica los datos que recibes
+    console.log(req.body);
 
-    // Validamos los datos de entrada
     if (disponibilidad === undefined && ubicacion === undefined) {
       return res
         .status(400)
@@ -311,7 +285,6 @@ const update_availability = async (req, res = response) => {
     const updates = [];
     const values = [];
 
-    // Solo agregamos los campos si están definidos
     if (disponibilidad !== undefined) {
       const disponibilidadBool = disponibilidad === 'true' || disponibilidad === true; // Asegura que el valor sea booleano
       updates.push("disponibilidad = ?");
@@ -323,27 +296,22 @@ const update_availability = async (req, res = response) => {
       values.push(ubicacion);
     }
 
-    // Añadimos el idUsuario al final de los valores para la cláusula WHERE
     values.push(idUsuario);
 
-    // Construimos y ejecutamos la consulta
     const [resultado] = await connection.execute(
       `UPDATE usuarios SET ${updates.join(", ")} WHERE idUsuario = ?`,
       values
     );
 
-    // Verificamos si se afectó alguna fila
     if (resultado.affectedRows === 0) {
       return res.status(404).json({ mensaje: "Usuario no encontrado" });
     }
 
-    // Consultamos el usuario actualizado para devolver la respuesta
     const [usuarioActualizado] = await connection.execute(
       "SELECT idUsuario, nombre, correo, contrasenia, tipo, disponibilidad, ubicacion FROM usuarios WHERE idUsuario = ?",
       [idUsuario]
     );
 
-    // Respondemos con los datos del usuario actualizado
     res.status(200).json({
       idUsuario: usuarioActualizado[0].idUsuario,
       nombre: usuarioActualizado[0].nombre,
@@ -359,7 +327,6 @@ const update_availability = async (req, res = response) => {
     res.status(500).json({ mensaje: "Error interno del servidor" });
   }
 };
-
 
 module.exports = {
   save_usuario,
