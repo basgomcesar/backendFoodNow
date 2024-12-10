@@ -6,26 +6,20 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const get_statistics_products = async (req, res = response) => {
   try {
-    // Cambiar idVendedor a idSeller para coincidir con el nombre en la ruta
     const { idSeller, year, month } = req.params;
 
     console.log(`Recibiendo parámetros - idSeller: ${idSeller}, year: ${year}, month: ${month}`);
 
-    // Validación básica de los parámetros
     if (!idSeller || !year || !month) {
       console.log('Faltan parámetros requeridos');
       return res.status(400).json({ mensaje: "Faltan parámetros requeridos: idSeller, year, month" });
     }
 
-    // Validar que year y month sean valores numéricos válidos
     if (isNaN(year) || isNaN(month)) {
       console.log('Año o mes no son valores numéricos válidos');
       return res.status(400).json({ mensaje: "El año y mes deben ser valores numéricos" });
     }
 
-    console.log('Realizando consulta SQL');
-
-    // Consulta SQL para obtener los productos más vendidos para el vendedor específico
     const [productos] = await connection.execute(
       `SELECT 
         p.nombre AS producto, 
@@ -41,18 +35,16 @@ const get_statistics_products = async (req, res = response) => {
       GROUP BY p.idProducto
       ORDER BY cantidad_vendida DESC
       LIMIT 10;`,
-      [idSeller, month, year] // Pasar los parámetros a la consulta SQL
+      [idSeller, month, year] 
     );
 
     console.log('Consulta SQL ejecutada, cantidad de productos encontrados:', productos.length);
 
-    // Comprobar si se encontraron productos
     if (productos.length === 0) {
       console.log('No se encontraron productos para el vendedor en el mes y año especificados');
       return res.status(404).json({ mensaje: "No se encontraron productos vendidos para este vendedor en el mes y año especificados" });
     }
 
-    // Responder con los productos más vendidos
     console.log('Productos encontrados, enviando respuesta');
     res.status(200).json({ productos });
 
@@ -86,7 +78,6 @@ const get_products_offered = async (req, res = response) => {
       });
     }
 
-    // Convertir las fotos a base64 para que sean retornadas en la respuesta
     const productosConFoto = productos.map((producto) => {
       return {
         ...producto,
