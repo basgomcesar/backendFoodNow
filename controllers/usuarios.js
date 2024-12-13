@@ -35,11 +35,25 @@ const save_usuario = async (req, res = response) => {
         error: "El correo ya está registrado",
       });
     }
+    
+
+    // Convertir tipo a idTipoUsuario
+    let idTipoUsuario;
+    if (tipo === "Vendedor") {
+      idTipoUsuario = 1;
+    } else if (tipo === "Cliente") {
+      idTipoUsuario = 2;
+    } else {
+      return res.status(400).json({
+        success: false,
+        error: "El tipo de usuario proporcionado no es válido",
+      });
+    }
 
     // Guardar el nuevo usuario
     const [resultado] = await connection.execute(
-      "INSERT INTO usuarios (nombre, correo, contrasenia, tipo, disponibilidad, foto) VALUES (?, ?, ?, ?, ?, ?)",
-      [nombre, correo, contrasenia, tipo, disponibilidadInt, foto]
+      "INSERT INTO usuarios (nombre, correo, contrasenia, idTipoUsuario, disponibilidad, foto) VALUES (?, ?, ?, ?, ?, ?)",
+      [nombre, correo, contrasenia, idTipoUsuario, disponibilidadInt, foto]
     );
 
     // Confirmar que el usuario fue guardado exitosamente
@@ -89,7 +103,7 @@ const get_usuario_by_id_params = async (req, res = response) => {
 
 const update_usuario = async (req, res = response) => {
   try {
-    const { idUsuario } = req.params;
+    const idUsuario = req.uid;
     const { nombre, correo, contrasenia, disponibilidad } = req.body;
 
     // Convertir disponibilidad a número
@@ -170,7 +184,7 @@ const update_usuario = async (req, res = response) => {
 
     // Consultar el usuario actualizado
     const [usuarioActualizado] = await connection.execute(
-      "SELECT idUsuario, nombre, correo, contrasenia, tipo, disponibilidad, foto FROM usuarios WHERE idUsuario = ?",
+      "SELECT idUsuario, nombre, correo, contrasenia, idTipoUsuario , disponibilidad, foto FROM usuarios WHERE idUsuario = ?",
       [idUsuario]
     );
 
@@ -178,15 +192,6 @@ const update_usuario = async (req, res = response) => {
     return res.status(200).json({
       success: true,
       message: "Usuario actualizado correctamente",
-      usuario: {
-        idUsuario: usuarioActualizado[0].idUsuario,
-        nombre: usuarioActualizado[0].nombre,
-        correo: usuarioActualizado[0].correo,
-        contrasenia: usuarioActualizado[0].contrasenia,
-        tipo: usuarioActualizado[0].tipo,
-        disponibilidad: usuarioActualizado[0].disponibilidad,
-        foto: usuarioActualizado[0].foto || null,
-      },
     });
   } catch (error) {
     console.error("Error al actualizar usuario: ", error.message || error);

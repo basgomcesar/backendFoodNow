@@ -12,7 +12,7 @@ const router = Router();
 // Rutas
 router.get('/:idUsuario', validarJWT, get_usuario_by_id_params); 
 router.post('/', upload.single('foto'), save_usuario); 
-router.put('/:idUsuario', upload.single('foto'), validarJWT, update_usuario);
+router.put('/', upload.single('foto'), validarJWT, update_usuario);
 router.delete('/:idUsuario', validarJWT, delete_usuario);
 router.put('/availability/:idUsuario', validarJWT, update_availability);
 
