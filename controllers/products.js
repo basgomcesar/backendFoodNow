@@ -97,6 +97,14 @@ const get_products_offered = async (req, res = response) => {
 
 
 const add_product = async (req, res = response) => {
+  const token = req.header('x-token');
+
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      error: 'No hay token en la petición',
+    });
+  }
   try {
     const { nombre, descripcion, precio, cantidadDisponible, disponible, categoria } = req.body;
 

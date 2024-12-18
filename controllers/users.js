@@ -9,7 +9,6 @@ const save_user = async (req, res = response) => {
   try {
     const { nombre, correo, contrasenia, tipo, disponibilidad } = req.body;
 
-    // Convertir disponibilidad a número
     const disponibilidadInt = disponibilidad === 'true' ? 1 : 0;
 
     // Validar que se haya subido un archivo de foto
@@ -78,6 +77,17 @@ const save_user = async (req, res = response) => {
 
 
 const update_user = async (req, res = response) => {
+
+  const token = req.header('x-token');
+
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      error: 'No hay token en la petición',
+    });
+  }
+
+
   try {
     const idUsuario = req.uid;
     const { nombre, correo, contrasenia, disponibilidad } = req.body;
