@@ -2,6 +2,7 @@ const express = require('express');
 // const bodyParser = require('body-parser'); 
 const cookieParser = require('cookie-parser');
 const cors = require('cors'); 
+const startGrpcServer = require('./configRPC/grpc/grpcServer');
 require("dotenv").config();
 
 const swaggerUi = require('swagger-ui-express');
@@ -44,3 +45,5 @@ const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`\nServidor está escuchando en puerto ${PORT}`);
 });
+// Iniciar el servidor gRPC
+startGrpcServer();
