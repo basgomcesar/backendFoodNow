@@ -39,6 +39,7 @@ app.use('/utils', require('./routes/utils'));
 app.use('/productos', require ('./routes/productos'));
 app.use('/users', require('./routes/users'));
 
+module.exports = app;
 
 const PORT = 3000;
 app.listen(PORT, () => {
