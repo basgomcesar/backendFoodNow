@@ -17,7 +17,7 @@ const login = async (req, res = response) => {
 
     //Ejecutar la consulta para encontrar el usuario
     const [rows] = await connection.execute(
-      'SELECT * FROM usuarios WHERE correo = ?  AND contrasenia = ?',
+      'SELECT tipou.idTipoUsuario,usuario.idUsuario, tipou.tipoUsuario, usuario.nombre, usuario.correo, usuario.contrasenia, usuario.foto, usuario.disponibilidad, usuario.ubicacion FROM  food_now.tipousuario AS tipou INNER JOIN food_now.usuarios AS usuario ON tipou.idTipoUsuario = usuario.idTipoUsuario WHERE usuario.correo = ? AND usuario.contrasenia = ? ;',
       [correo, contrasenia]
     );
 

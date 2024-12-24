@@ -16,7 +16,7 @@ const swaggerOptions = {
       },
     ],
   },
-  apis: ['./routes/*.js'], // Ruta donde tienes tus archivos de rutas
+  apis: ['./routes/*.js'], // Aquí se definen los archivos que contienen las rutas
 };
 
 // Generar la documentación de Swagger
