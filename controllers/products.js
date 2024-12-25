@@ -183,8 +183,42 @@ const add_product = async (req, res = response) => {
   }
 };
 
+const get_order_product = async (req, res = response) => {
+  try {
+    const { idPedido } = req.params;
+
+    if (!idPedido || isNaN(idPedido)) {
+      return res.status(400).json({ mensaje: "ID del pedido inválido" });
+    }
+
+    const [productos] = await connection.execute(
+      `SELECT p.* 
+      FROM productos p
+      INNER JOIN pedidos pe ON p.idProducto = pe.idProducto
+      WHERE pe.idPedido = ?
+      `, 
+      [idPedido]
+    );
+
+    if (productos.length === 0) {
+      return res.status(404).json({
+        mensaje: "No se encontraron productos para este pedido",
+      });
+    }
+
+    res.status(200).json({
+      mensaje: "Productos del pedido obtenidos correctamente",
+      productos,
+    });
+  } catch (error) {
+    console.error("Error al obtener productos del pedido: ", error);
+    res.status(500).json({ mensaje: "Error interno del servidor" });
+  }
+};
+
 module.exports = {
   get_statistics_products,
   get_products_offered,
   add_product,
+  get_order_product,
 };

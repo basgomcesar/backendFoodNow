@@ -38,6 +38,7 @@ app.use('/products', require('./routes/products'));
 app.use('/utils', require('./routes/utils'));
 app.use('/productos', require ('./routes/productos'));
 app.use('/users', require('./routes/users'));
+app.use('/pedidos', require('./routes/pedidos'));
 
 module.exports = app;
 

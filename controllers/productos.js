@@ -192,10 +192,6 @@ const add_product = async (req, res = response) => {
   }
 };
 
-
-
-
-
 module.exports = {
   get_productos_by_usuario,
   update_producto,

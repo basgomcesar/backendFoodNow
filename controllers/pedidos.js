@@ -10,10 +10,16 @@ const SECRET_KEY = require("../helpers/config");
  */
 const get_pedidos_activos_by_usuario = async (req, res = response) => {
   try {
-    const uid = req.uid; // El UID ya se ha extraído gracias al middleware validarJWT
+    const uid = req.uid; // El UID se extrae en el middleware validarJWT
 
     const [pedidos] = await connection.execute(
-      "SELECT * FROM pedidos WHERE idUsuario = ? AND estado = 'activo'",
+      `
+      SELECT p.idPedido, p.fechaPedido, ep.estadoPedido, u.nombre AS nombreCliente
+      FROM pedidos p
+      INNER JOIN estadoPedido ep ON p.idEstadoPedido = ep.idEstadoPedido
+      INNER JOIN usuarios u ON p.idCliente = u.idUsuario
+      WHERE p.idVendedor = 1 AND ep.estadoPedido = 'Activo'
+      `,
       [uid]
     );
 
@@ -34,44 +40,6 @@ const get_pedidos_activos_by_usuario = async (req, res = response) => {
   }
 };
 
-/**
- * Recupera todos los productos asociados a un pedido específico
- * @param {*} req
- * @param {*} res
- */
-const get_productos_by_pedido = async (req, res = response) => {
-  try {
-    const { idPedido } = req.params;
-
-    if (!idPedido || isNaN(idPedido)) {
-      return res.status(400).json({ mensaje: "ID del pedido inválido" });
-    }
-
-    const [productos] = await connection.execute(
-      `SELECT p.* 
-       FROM productos p
-       INNER JOIN pedido_productos pp ON p.idProducto = pp.idProducto
-       WHERE pp.idPedido = ?`,
-      [idPedido]
-    );
-
-    if (productos.length === 0) {
-      return res.status(404).json({
-        mensaje: "No se encontraron productos para este pedido",
-      });
-    }
-
-    res.status(200).json({
-      mensaje: "Productos del pedido obtenidos correctamente",
-      productos,
-    });
-  } catch (error) {
-    console.error("Error al obtener productos del pedido: ", error);
-    res.status(500).json({ mensaje: "Error interno del servidor" });
-  }
-};
-
 module.exports = {
   get_pedidos_activos_by_usuario,
-  get_productos_by_pedido,
 };
