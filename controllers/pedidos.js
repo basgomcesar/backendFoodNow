@@ -18,14 +18,15 @@ const get_pedidos_activos_by_usuario = async (req, res = response) => {
       FROM pedidos p
       INNER JOIN estadoPedido ep ON p.idEstadoPedido = ep.idEstadoPedido
       INNER JOIN usuarios u ON p.idCliente = u.idUsuario
-      WHERE p.idVendedor = 1 AND ep.estadoPedido = 'Activo'
+      WHERE p.idVendedor = ? AND ep.estadoPedido = 'Activo'
       `,
       [uid]
     );
 
     if (pedidos.length === 0) {
-      return res.status(404).json({
+      return res.status(200).json({
         mensaje: "No se encontraron pedidos activos para este usuario",
+        pedidos: [],
       });
     }
 
