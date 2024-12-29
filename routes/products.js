@@ -4,9 +4,7 @@ const {
      get_statistics_products,
      get_products_offered, 
      add_product,  
-     get_productos_by_pedido,
      get_order_product,
-     update_producto,
      update_product,
      delete_product
 } = require('../controllers/products');
