@@ -86,10 +86,9 @@ const get_pending_orders_by_customer = async (req, res = response) => {
  */
 const cancel_order = async (req, res = response) => {
   try {
-    const { idPedido } = req.params; // ID del pedido a cancelar
-    const uid = req.uid; // ID del usuario autenticado (opcional, depende de la lógica)
+    const { idPedido } = req.params;
+    const uid = req.uid;
 
-    // Verifica que el pedido pertenece al usuario autenticado
     const [pedidoExistente] = await connection.execute(
       `
       SELECT p.idPedido 
@@ -106,7 +105,6 @@ const cancel_order = async (req, res = response) => {
       });
     }
 
-    // Actualiza el estado del pedido a 'Cancelado'
     const [resultado] = await connection.execute(
       `
       UPDATE pedidos 
