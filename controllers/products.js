@@ -229,7 +229,7 @@ const update_product = async (req, res = response) => {
 
     // Validar que el producto pertenece al usuario autenticado
     const [producto] = await connection.execute(
-      "SELECT * FROM productos WHERE idProducto = ? AND idUsuario = ?",
+      "SELECT * FROM productos WHERE idProducto = ? AND idVendedor = ?",
       [idProducto, idUsuario]
     );
 
@@ -244,11 +244,21 @@ const update_product = async (req, res = response) => {
       updates.push("descripcion = ?");
       values.push(descripcion);
     }
-    if (precio) {
+    if (precio !== undefined) {
+      if (precio < 0) {
+        return res.status(400).json({
+          mensaje: "El precio no puede ser menor a 0",
+        });
+      }
       updates.push("precio = ?");
       values.push(precio);
     }
     if (cantidadDisponible) {
+      if (cantidadDisponible !== undefined && cantidadDisponible < 0) {
+        return res.status(400).json({
+          mensaje: "La cantidad disponible no puede ser menor a 0",
+        });
+      }
       updates.push("cantidadDisponible = ?");
       values.push(cantidadDisponible);
     }
@@ -262,7 +272,7 @@ const update_product = async (req, res = response) => {
     values.push(idProducto);
 
     await connection.execute(
-      `UPDATE productos SET ${updates.join(", ")} WHERE idProducto = ? AND idUsuario = ?`,
+      `UPDATE productos SET ${updates.join(", ")} WHERE idProducto = ? AND idVendedor = ?`,
       [...values, idUsuario]
     );
 
@@ -288,7 +298,7 @@ const delete_product = async (req, res = response) => {
 
     // Validar que el producto pertenece al usuario autenticado
     const [producto] = await connection.execute(
-      "SELECT * FROM productos WHERE idProducto = ? AND idUsuario = ?",
+      "SELECT * FROM productos WHERE idProducto = ? AND idVendedor = ?",
       [idProducto, idUsuario]
     );
 
