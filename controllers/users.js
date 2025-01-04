@@ -191,7 +191,6 @@ const update_user = async (req, res = response) => {
   
 const delete_usuario = async (req, res = response) => {
   try {
-    // Obtener el token del encabezado
     const token = req.header('x-token');
 
     if (!token) {
@@ -200,18 +199,15 @@ const delete_usuario = async (req, res = response) => {
 
     let uid;
     try {
-      // Verificar y extraer el uid del token
       ({ uid } = jwt.verify(token, SECRET_KEY));
     } catch (error) {
       return res.status(401).json({ error: "Token inválido o expirado" });
     }
 
-    // Verificar que el uid extraído sea válido
     if (!uid || isNaN(uid)) {
       return res.status(400).json({ error: "ID de usuario inválido en el token" });
     }
 
-    // Ejecutar la consulta para eliminar el usuario
     const [resultado] = await connection.execute(
       "DELETE FROM usuarios WHERE idUsuario = ?",
       [uid]
