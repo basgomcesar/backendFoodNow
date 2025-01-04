@@ -1,7 +1,9 @@
 const { Router } = require('express');
 const multer = require('multer');
-const { save_usuario, get_usuario_by_id_params, update_usuario, delete_usuario, update_availability, get_products_offered } = require('../controllers/usuarios');
+const { save_usuario, get_usuario_by_id_params, update_usuario, delete_usuario, update_availability} = require('../controllers/usuarios');
+
 const { validarJWT } = require('../helpers/validar-jwt');
+
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -16,3 +18,4 @@ router.put('/availability/:idUsuario', validarJWT, update_availability);
 router.get('/products/:idUsuario', get_products_offered);
 
 module.exports = router;
+

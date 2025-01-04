@@ -3,34 +3,63 @@ const { response } = require("express");
 const connection = require("../models/database");
 const bcrypt = require("bcryptjs");
 const upload = multer({ storage: multer.memoryStorage() });
+const { SECRET_KEY } = require('../helpers/config');
+const jwt = require('jsonwebtoken');
+
 
 const save_usuario = async (req, res = response) => {
   try {
     const { nombre, correo, contrasenia, tipo, disponibilidad } = req.body;
+
+    // Convertir disponibilidad a número
     const disponibilidadInt = disponibilidad === 'true' ? 1 : 0;
 
+    // Validar que se haya subido un archivo de foto
     if (!req.file) {
-      return res.status(400).json({ error: "Se requiere una foto de usuario" });
+      return res.status(400).json({
+        success: false,
+        error: "Se requiere una foto de usuario",
+      });
     }
     const foto = req.file.buffer;
 
+    // Verificar si el correo ya está registrado
+    const [existingUser] = await connection.execute(
+      "SELECT * FROM usuarios WHERE correo = ?",
+      [correo]
+    );
+
+    if (existingUser.length > 0) {
+      return res.status(409).json({
+        success: false,
+        error: "El correo ya está registrado",
+      });
+    }
+
+    // Guardar el nuevo usuario
     const [resultado] = await connection.execute(
       "INSERT INTO usuarios (nombre, correo, contrasenia, tipo, disponibilidad, foto) VALUES (?, ?, ?, ?, ?, ?)",
       [nombre, correo, contrasenia, tipo, disponibilidadInt, foto]
     );
 
-    res.status(201).json({
-      idUsuario: resultado.insertId,
-      nombre,
-      correo,
-      tipo,
-      contrasenia,
-      disponibilidad,
-      foto: foto || null,
-    });
+    // Confirmar que el usuario fue guardado exitosamente
+    if (resultado.affectedRows > 0) {
+      return res.status(201).json({
+        success: true,
+        message: "Usuario creado con éxito",
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        error: "No se pudo crear el usuario, verifica tus datos",
+      });
+    }
   } catch (error) {
-    console.error("Error al guardar usuario: ", error);
-    res.status(400).json({ error: "Error al guardar el usuario" });
+    console.error("Error al guardar usuario: ", error.message || error);
+    res.status(500).json({
+      success: false,
+      error: "Error interno del servidor al guardar el usuario",
+    });
   }
 };
 
@@ -59,101 +88,155 @@ const get_usuario_by_id_params = async (req, res = response) => {
 };
 
 const update_usuario = async (req, res = response) => {
-    try {
-      const { idUsuario } = req.params;
-      const { nombre, correo, contrasenia, disponibilidad } = req.body;
-  
-      const updates = [];
-      const values = [];
-  
-      // Si se envía una foto, la gestionamos de manera similar a save_usuario
-      let foto = null;
-      if (req.file) {
-        foto = req.file.buffer;  // Guardamos la foto solo si está presente
-        updates.push("foto = ?");
-        values.push(foto);
-      }
-  
-      // Construcción dinámica de la consulta UPDATE para otros campos
-      if (nombre) {
-        updates.push("nombre = ?");
-        values.push(nombre);
-      }
-      if (correo) {
-        updates.push("correo = ?");
-        values.push(correo);
-      }
-      if (contrasenia) {
-        updates.push("contrasenia = ?");
-        values.push(contrasenia);
-      }
-      if (disponibilidad) {
-        const disponibilidadInt = disponibilidad === 'true' ? 1 : 0;
-        updates.push("disponibilidad = ?");
-        values.push(disponibilidadInt);
-      }
-  
-      // Si no se especifica ningún campo para actualizar
-      if (updates.length === 0) {
-        return res.status(400).json({ error: "No se ha proporcionado ningún dato para actualizar" });
-      }
-  
-      // Se añade el idUsuario al final de los valores para la condición WHERE
-      values.push(idUsuario);
-  
-      // Ejecución de la consulta de actualización
-      const [resultado] = await connection.execute(
-        `UPDATE usuarios SET ${updates.join(", ")} WHERE idUsuario = ?`,
-        values
+  try {
+    const { idUsuario } = req.params;
+    const { nombre, correo, contrasenia, disponibilidad } = req.body;
+
+    // Convertir disponibilidad a número
+    const disponibilidadInt = disponibilidad === 'true' ? 1 : 0;
+
+    // Validar que se haya subido un archivo de foto (si aplica)
+    let foto = null;
+    if (req.file) {
+      foto = req.file.buffer;
+    }
+
+    // Construcción dinámica de la consulta UPDATE
+    const updates = [];
+    const values = [];
+
+    if (nombre) {
+      updates.push("nombre = ?");
+      values.push(nombre);
+    }
+
+    if (correo) {
+      // Verificar si el correo ya está registrado por otro usuario
+      const [existingUser] = await connection.execute(
+        "SELECT * FROM usuarios WHERE correo = ? AND idUsuario != ?",
+        [correo, idUsuario]
       );
-  
-      // Verificación de que el usuario existe
-      if (resultado.affectedRows === 0) {
-        return res.status(404).json({ mensaje: "Usuario no encontrado" });
+
+      if (existingUser.length > 0) {
+        return res.status(409).json({
+          success: false,
+          error: "El correo ya está registrado por otro usuario",
+        });
       }
-  
-      // Consulta el usuario actualizado
-      const [usuarioActualizado] = await connection.execute(
-        "SELECT idUsuario, nombre, correo, contrasenia, tipo, disponibilidad, foto FROM usuarios WHERE idUsuario = ?",
-        [idUsuario]
-      );
-  
-      // Respuesta con los datos del usuario actualizado
-      res.status(200).json({
+
+      updates.push("correo = ?");
+      values.push(correo);
+    }
+
+    if (contrasenia) {
+      updates.push("contrasenia = ?");
+      values.push(contrasenia);
+    }
+
+    if (disponibilidad) {
+      updates.push("disponibilidad = ?");
+      values.push(disponibilidadInt);
+    }
+
+    if (foto) {
+      updates.push("foto = ?");
+      values.push(foto);
+    }
+
+    // Verificar que haya campos para actualizar
+    if (updates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "No se ha proporcionado ningún dato para actualizar",
+      });
+    }
+
+    // Agregar idUsuario al final de los valores
+    values.push(idUsuario);
+
+    // Ejecutar la consulta de actualización
+    const [resultado] = await connection.execute(
+      `UPDATE usuarios SET ${updates.join(", ")} WHERE idUsuario = ?`,
+      values
+    );
+
+    // Verificar si el usuario fue encontrado
+    if (resultado.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        error: "Usuario no encontrado",
+      });
+    }
+
+    // Consultar el usuario actualizado
+    const [usuarioActualizado] = await connection.execute(
+      "SELECT idUsuario, nombre, correo, contrasenia, tipo, disponibilidad, foto FROM usuarios WHERE idUsuario = ?",
+      [idUsuario]
+    );
+
+    // Responder con los datos del usuario actualizado
+    return res.status(200).json({
+      success: true,
+      message: "Usuario actualizado correctamente",
+      usuario: {
         idUsuario: usuarioActualizado[0].idUsuario,
         nombre: usuarioActualizado[0].nombre,
         correo: usuarioActualizado[0].correo,
         contrasenia: usuarioActualizado[0].contrasenia,
-        tipo: usuarioActualizado[0].tipo, // asegurarse de que este campo exista en la tabla
-        disponibilidad: usuarioActualizado[0].disponibilidad, // asegurarse de que este campo exista en la tabla
+        tipo: usuarioActualizado[0].tipo,
+        disponibilidad: usuarioActualizado[0].disponibilidad,
         foto: usuarioActualizado[0].foto || null,
-        mensaje: "Usuario actualizado correctamente",
-      });
-    } catch (error) {
-      console.error("Error al actualizar usuario: ", error);
-      res.status(500).json({ mensaje: "Error interno del servidor" });
-    }
-  };
+      },
+    });
+  } catch (error) {
+    console.error("Error al actualizar usuario: ", error.message || error);
+    res.status(500).json({
+      success: false,
+      error: "Error interno del servidor al actualizar el usuario",
+    });
+  }
+};
+
   
 const delete_usuario = async (req, res = response) => {
   try {
-    const { idUsuario } = req.params; // Extraer idUsuario de los parámetros de la ruta
+    // Obtener el token del encabezado
+    const token = req.header('x-token');
 
+    if (!token) {
+      return res.status(401).json({ error: "No se proporcionó el token" });
+    }
+
+    let uid;
+    try {
+      // Verificar y extraer el uid del token
+      ({ uid } = jwt.verify(token, SECRET_KEY));
+    } catch (error) {
+      return res.status(401).json({ error: "Token inválido o expirado" });
+    }
+
+    // Verificar que el uid extraído sea válido
+    if (!uid || isNaN(uid)) {
+      return res.status(400).json({ error: "ID de usuario inválido en el token" });
+    }
+
+    // Ejecutar la consulta para eliminar el usuario
     const [resultado] = await connection.execute(
       "DELETE FROM usuarios WHERE idUsuario = ?",
-      [idUsuario]
+      [uid]
     );
 
     if (resultado.affectedRows === 0) {
-      res.status(404).json({ mensaje: "Usuario no encontrado" });
-    } else {
-      res.json({ mensaje: "Usuario eliminado exitosamente" });
+      return res.status(404).json({ mensaje: "Usuario no encontrado" });
     }
+
+    res.json({ mensaje: "Usuario eliminado exitosamente" });
   } catch (error) {
     console.error("Error al eliminar usuario: ", error);
-    res.status(400).json({ error: "Error al eliminar el usuario" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
+
 
 
 const change_disponibility = async (req, res = response) => {
@@ -186,15 +269,13 @@ const change_disponibility = async (req, res = response) => {
 };
 
 const update_availability = async (req, res = response) => {
-  console.log('id-------')
 
   try {
     const { idUsuario } = req.params;
     const { disponibilidad, ubicacion } = req.body;
 
-    console.log(req.body); // Verifica los datos que recibes
+    console.log(req.body);
 
-    // Validamos los datos de entrada
     if (disponibilidad === undefined && ubicacion === undefined) {
       return res
         .status(400)
@@ -204,7 +285,6 @@ const update_availability = async (req, res = response) => {
     const updates = [];
     const values = [];
 
-    // Solo agregamos los campos si están definidos
     if (disponibilidad !== undefined) {
       const disponibilidadBool = disponibilidad === 'true' || disponibilidad === true; // Asegura que el valor sea booleano
       updates.push("disponibilidad = ?");
@@ -216,27 +296,22 @@ const update_availability = async (req, res = response) => {
       values.push(ubicacion);
     }
 
-    // Añadimos el idUsuario al final de los valores para la cláusula WHERE
     values.push(idUsuario);
 
-    // Construimos y ejecutamos la consulta
     const [resultado] = await connection.execute(
       `UPDATE usuarios SET ${updates.join(", ")} WHERE idUsuario = ?`,
       values
     );
 
-    // Verificamos si se afectó alguna fila
     if (resultado.affectedRows === 0) {
       return res.status(404).json({ mensaje: "Usuario no encontrado" });
     }
 
-    // Consultamos el usuario actualizado para devolver la respuesta
     const [usuarioActualizado] = await connection.execute(
       "SELECT idUsuario, nombre, correo, contrasenia, tipo, disponibilidad, ubicacion FROM usuarios WHERE idUsuario = ?",
       [idUsuario]
     );
 
-    // Respondemos con los datos del usuario actualizado
     res.status(200).json({
       idUsuario: usuarioActualizado[0].idUsuario,
       nombre: usuarioActualizado[0].nombre,
@@ -249,36 +324,6 @@ const update_availability = async (req, res = response) => {
     });
   } catch (error) {
     console.error("Error al actualizar usuario: ", error);
-    res.status(500).json({ mensaje: "Error interno del servidor" });
-  }
-};
-
-const get_products_offered = async (req, res = response) => {
-  try {
-    const { idUsuario } = req.params; // Obtén idUsuario desde los parámetros de la ruta
-    if (!idUsuario) {
-      return res.status(400).json({ mensaje: "Se requiere un ID de usuario" });
-    }
-
-    // Consulta para obtener todos los productos asociados al usuario
-    const [productos] = await connection.execute(
-      "SELECT idProducto, nombre, descripcion, precio, cantidadDisponible, disponible, foto, categoria, idUsuario FROM productos WHERE idUsuario = ?",
-      [idUsuario]
-    );
-
-    if (productos.length === 0) {
-      return res
-        .status(404)
-        .json({ mensaje: "No se encontraron productos para este usuario" });
-    }
-
-    // Imprime los productos obtenidos antes de enviarlos
-    console.log('Productos obtenidos:', productos);
-
-    // Devuelve la lista completa de productos
-    res.status(200).json({ productos });
-  } catch (error) {
-    console.error("Error al obtener los productos: ", error);
     res.status(500).json({ mensaje: "Error interno del servidor" });
   }
 };
