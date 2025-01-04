@@ -57,19 +57,33 @@ const get_statistics_products = async (req, res = response) => {
 const get_products_offered = async (req, res = response) => {
   const { idUsuario } = req.params;
 
+  // Verificar que idUsuario está definido
+  if (!idUsuario) {
+    return res.status(400).json({
+      message: 'El parámetro idUsuario es requerido y no puede ser undefined.',
+    });
+  }
+
   try {
+    // Asegurarse de que el idUsuario es un número entero
+    const id = parseInt(idUsuario, 10);
+
+    if (isNaN(id)) {
+      return res.status(400).json({
+        message: 'El parámetro idUsuario debe ser un número válido.',
+      });
+    }
+
+    // Consulta SQL solo para nombre del producto, categoría y cantidad disponible
     const [productos] = await connection.execute(
       `SELECT 
         p.nombre AS producto,
-        p.descripcion,
-        p.precio,
-        p.cantidadDisponible,
-        p.disponible,
-        p.categoria,
-        p.foto
+        c.categoriaProducto AS categoria,
+        p.cantidadDisponible
       FROM productos p
-      WHERE p.idUsuario = ?`,
-      [idUsuario]
+      JOIN categoriaProducto c ON p.idcategoriaProducto = c.idcategoriaProducto
+      WHERE p.idVendedor = ?`,  // Cambié idUsuario a idVendedor
+      [id]
     );
 
     if (productos.length === 0) {
@@ -78,14 +92,7 @@ const get_products_offered = async (req, res = response) => {
       });
     }
 
-    const productosConFoto = productos.map((producto) => {
-      return {
-        ...producto,
-        foto: producto.foto ? producto.foto.toString('base64') : null,
-      };
-    });
-
-    return res.status(200).json({ productos: productosConFoto });
+    return res.status(200).json({ productos });
   } catch (error) {
     console.error('Error al obtener productos ofrecidos:', error);
     return res.status(500).json({
@@ -93,8 +100,7 @@ const get_products_offered = async (req, res = response) => {
       error: error.message
     });
   }
-}
-
+};
 
 const add_product = async (req, res = response) => {
   const token = req.header('x-token');
