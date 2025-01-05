@@ -1,32 +1,25 @@
-const {Router} = require('express');
 const path = require('path');
 const multer = require('multer')
+const { Router } = require("express");
 
-const {
-    get_orders,
-    get_order_by_id,
-    add_order,
-    update_order,
-    delete_order
-} = require('../controllers/orders');
-
-const {validarJWT} = require('../helpers/validar-jwt');
+const { validarJWT } = require("../helpers/validar-jwt");
 
 const router = Router();
 
-// Ruta para obtener todas las ordenes
-router.get('/', validarJWT, get_orders);
+const {
+  get_pending_orders_by_seller,
+  get_pending_orders_by_customer,
+  cancel_order,
+    add_order,
 
-// Ruta para obtener una orden por su id
-router.get('/:idOrden', validarJWT, get_order_by_id);
+} = require('../controllers/orders');
+
+router.get("/pending/seller", validarJWT, get_pending_orders_by_seller);
+router.get("/pending/customer", validarJWT, get_pending_orders_by_customer);
+router.put('/cancelorder/:idPedido', validarJWT, cancel_order);
 
 // Ruta para agregar una orden
 router.post('/', validarJWT, add_order);
 
-// Ruta para actualizar una orden
-router.put('/:idOrden', validarJWT, update_order);
-
-// Ruta para eliminar una orden
-router.delete('/:idOrden', validarJWT, delete_order);
 
 module.exports = router;
