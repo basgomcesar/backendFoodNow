@@ -1,20 +1,19 @@
-# Usa una imagen base de Node.js
-FROM node:18
+FROM node:18 
 
-# Define el directorio de trabajo en la imagen
+
 WORKDIR /app
 
-# Copia los archivos del proyecto al contenedor
+# Copia los archivos necesarios para instalar dependencias
 COPY package*.json ./
 
-# Instala las dependencias del proyecto
+# Instala las dependencias
 RUN npm install
 
-# Copia el resto del código del proyecto
+# Copia el resto de los archivos del proyecto
 COPY . .
 
-# Expone el puerto que usará tu API (por ejemplo, 3000)
+# Asegúrate de exponer el puerto en el que tu aplicación escucha
 EXPOSE 3000
 
-# Define el comando para ejecutar la API
+# Comando para iniciar la aplicación
 CMD ["node", "server.js"]

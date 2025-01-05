@@ -37,7 +37,9 @@ app.use('/auth', require('./routes/auth'));
 app.use('/products', require('./routes/products'));
 app.use('/utils', require('./routes/utils'));
 app.use('/productos', require ('./routes/productos'));
+app.use('/users', require('./routes/users'));
 
+module.exports = app;
 
 const PORT = 3000;
 app.listen(PORT, () => {
