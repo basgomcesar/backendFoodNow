@@ -191,7 +191,6 @@ const add_product = async (req, res = response) => {
   }
 };
 
-
 const get_order_product = async (req, res = response) => {
   try {
     const { idPedido } = req.params;
