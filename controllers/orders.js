@@ -14,7 +14,7 @@ const get_pending_orders_by_seller = async (req, res = response) => {
 
     const [pedidos] = await connection.execute(
       `
-      SELECT p.idPedido, p.fechaPedido, ep.estadoPedido, u.nombre AS nombreCliente
+      SELECT p.idPedido, p.fechaPedido, p.cantidad, ep.estadoPedido, u.nombre AS nombreCliente
       FROM pedidos p
       INNER JOIN estadoPedido ep ON p.idEstadoPedido = ep.idEstadoPedido
       INNER JOIN usuarios u ON p.idCliente = u.idUsuario
@@ -52,7 +52,7 @@ const get_pending_orders_by_customer = async (req, res = response) => {
 
     const [pedidos] = await connection.execute(
       `
-      SELECT p.idPedido, p.fechaPedido, ep.estadoPedido, u.nombre AS nombreVendedor
+      SELECT p.idPedido, p.fechaPedido, p.cantidad, ep.estadoPedido, u.nombre AS nombreVendedor
       FROM pedidos p
       INNER JOIN estadoPedido ep ON p.idEstadoPedido = ep.idEstadoPedido
       INNER JOIN usuarios u ON p.idVendedor = u.idUsuario
