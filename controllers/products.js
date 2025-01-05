@@ -102,6 +102,8 @@ const get_products_offered = async (req, res = response) => {
   }
 };
 
+
+
 const add_product = async (req, res = response) => {
   const token = req.header('x-token');
 
