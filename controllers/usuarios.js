@@ -334,6 +334,5 @@ module.exports = {
   update_usuario,
   delete_usuario,
   change_disponibility,
-  update_availability,
-  get_products_offered
+  update_availability
 };
