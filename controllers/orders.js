@@ -130,6 +130,52 @@ const cancel_order = async (req, res = response) => {
     res.status(status).json({ mensaje: error.message || "Error interno del servidor" });
   }
 };
+const confirm_order = async (req, res = response) => {
+  try {
+    const { idPedido } = req.params;
+    const uid = req.uid;
+    console.log("Este es el idPedido", idPedido);
+    console.log("Este es el uid", uid);
+    const [pedidoExistente] = await connection.execute(
+      `
+      SELECT p.idPedido 
+      FROM pedidos p
+      INNER JOIN usuarios u ON p.idVendedor = u.idUsuario
+      WHERE p.idPedido = ? AND p.idVendedor = ?
+      `,
+      [idPedido, uid]
+    );
+
+    if (pedidoExistente.length === 0) {
+      return res.status(404).json({
+        mensaje: "No se encontró el pedido o no pertenece al usuario autenticado",
+      });
+    }
+
+    const [resultado] = await connection.execute(
+      `
+      UPDATE pedidos 
+      SET idEstadoPedido = (SELECT idEstadoPedido FROM estadoPedido WHERE estadoPedido = 'Entregado')
+      WHERE idPedido = ?
+      `,
+      [idPedido]
+    );
+
+    if (resultado.affectedRows === 0) {
+      return res.status(400).json({
+        mensaje: "No se pudo confirmar el pedido",
+      });
+    }
+
+    res.status(200).json({
+      mensaje: "El pedido se entrego correctamente",
+    });
+  } catch (error) {
+    console.error("Error al marcar el pedido como entregado: ", error);
+    const status = error.status || 500;
+    res.status(status).json({ mensaje: error.message || "Error interno del servidor" });
+  }
+};
 
 const add_order = async (req, res = response) => {
   try {
@@ -211,4 +257,5 @@ module.exports = {
   get_pending_orders_by_seller,
   get_pending_orders_by_customer,
   cancel_order,
+  confirm_order
 };
