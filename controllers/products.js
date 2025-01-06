@@ -220,10 +220,6 @@ const add_product = async (req, res = response) => {
   }
 };
 
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/main
 const get_order_product = async (req, res = response) => {
   try {
     const { idPedido } = req.params;
