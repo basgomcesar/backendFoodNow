@@ -4,7 +4,7 @@ const path = require('path');
 
 //add_product test
 describe('Test para crear un producto', () => {
-  let token = '';  // Variable para guardar el token
+  let token = '';  
 
   it('Debe generar un token con las credenciales correctas', async () => {
     const loginResponse = await request(app)
@@ -18,7 +18,6 @@ describe('Test para crear un producto', () => {
     expect(loginResponse.headers).toHaveProperty('x-token');
     
     token = loginResponse.headers['x-token'];
-   // expect(token).not.toBeUndefined();  // Asegurarse de que el token esté presente
     console.log("Token recibido:", token);
   });
 
