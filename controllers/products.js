@@ -1,108 +1,137 @@
 const multer = require("multer");
 const { response } = require("express");
 const connection = require("../models/database");
-const bcrypt = require("bcryptjs");
-const upload = multer({ storage: multer.memoryStorage() });
+const { SECRET_KEY } = require('../helpers/config');
+const jwt = require('jsonwebtoken');
 
 const get_statistics_products = async (req, res = response) => {
   try {
-    const { idSeller, year, month } = req.params;
+    // Obtener el token desde la cabecera 'x-token'
+    const token = req.header('x-token');
+    console.log(`Token recibido: ${token}`);
 
-    console.log(`Recibiendo parámetros - idSeller: ${idSeller}, year: ${year}, month: ${month}`);
+    if (!token) {
+      console.log("Token no proporcionado.");
+      return res.status(401).json({ mensaje: "No se proporcionó el token" });
+    }
+
+    // Verificar el token y extraer el UID
+    let uid;
+    try {
+      ({ uid } = jwt.verify(token, SECRET_KEY));
+      console.log(`Token verificado. UID extraído: ${uid}`);
+    } catch (error) {
+      console.error("Error al verificar el token:", error.message);
+      return res.status(401).json({ mensaje: `Token inválido o expirado: ${error.message}` });
+    }
+
+    // Extraer parámetros
+    const { idSeller, year, month } = req.params;
+    console.log(`Parámetros recibidos - idSeller: ${idSeller}, year: ${year}, month: ${month}`);
 
     if (!idSeller || !year || !month) {
-      console.log('Faltan parámetros requeridos');
+      console.log("Faltan parámetros requeridos.");
       return res.status(400).json({ mensaje: "Faltan parámetros requeridos: idSeller, year, month" });
     }
 
     if (isNaN(year) || isNaN(month)) {
-      console.log('Año o mes no son valores numéricos válidos');
-      return res.status(400).json({ mensaje: "El año y mes deben ser valores numéricos" });
+      console.log("Año o mes no son valores numéricos válidos.");
+      return res.status(400).json({ mensaje: "El año y mes deben ser valores numéricos." });
     }
 
+    // Consulta SQL
+    console.log("Ejecutando consulta SQL...");
     const [productos] = await connection.execute(
       `SELECT 
-        p.nombre AS producto, 
-        COUNT(ped.idPedido) AS cantidad_vendida
-      FROM productos p
-      LEFT JOIN pedidos ped 
-        ON p.idProducto = ped.idProducto
-      WHERE 
-        p.idUsuario = ? 
-        AND ped.estado = 'entregado' 
-        AND MONTH(ped.fechaPedido) = ? 
-        AND YEAR(ped.fechaPedido) = ?
-      GROUP BY p.idProducto
-      ORDER BY cantidad_vendida DESC
-      LIMIT 10;`,
-      [idSeller, month, year] 
+          p.nombre AS producto, 
+          COUNT(ped.idPedido) AS cantidad_vendida
+        FROM productos p
+        LEFT JOIN pedidos ped 
+          ON p.idProducto = ped.idProducto
+        WHERE 
+          p.idUsuario = ? 
+          AND ped.estado = 'entregado' 
+          AND MONTH(ped.fechaPedido) = ? 
+          AND YEAR(ped.fechaPedido) = ?
+        GROUP BY p.idProducto
+        ORDER BY cantidad_vendida DESC
+        LIMIT 10;`,
+      [idSeller, month, year]
     );
 
-    console.log('Consulta SQL ejecutada, cantidad de productos encontrados:', productos.length);
+    console.log(`Consulta ejecutada. Productos encontrados: ${productos.length}`);
 
     if (productos.length === 0) {
-      console.log('No se encontraron productos para el vendedor en el mes y año especificados');
-      return res.status(404).json({ mensaje: "No se encontraron productos vendidos para este vendedor en el mes y año especificados" });
+      console.log("No se encontraron productos para el vendedor en el mes y año especificados.");
+      return res.status(404).json({ mensaje: "No se encontraron productos vendidos para este vendedor en el mes y año especificados." });
     }
 
-    console.log('Productos encontrados, enviando respuesta');
+    // Enviar respuesta
+    console.log("Productos encontrados, enviando respuesta.");
     res.status(200).json({ productos });
-
   } catch (error) {
-    console.error("Error al obtener los productos más vendidos: ", error);
-    res.status(500).json({ mensaje: "Error interno del servidor al obtener las estadísticas de productos" });
+    console.error("Error al obtener las estadísticas de productos:", error);
+    res.status(500).json({ mensaje: "Error interno del servidor al obtener las estadísticas de productos." });
   }
 };
 
 const get_products_offered = async (req, res = response) => {
   try {
+    const token = req.header('x-token');
+    console.log(`Token recibido: ${token}`); // Log para verificar si el token llega
+
+    if (!token) {
+      console.log("Token no proporcionado.");
+      return res.status(401).json({ mensaje: "No se proporcionó el token" });
+    }
+
+    let uid;
+    try {
+      // Verifica el token y extrae el UID
+      ({ uid } = jwt.verify(token, SECRET_KEY));
+      console.log(`Token verificado. UID extraído: ${uid}`);
+    } catch (error) {
+      console.error("Error al verificar el token:", error.message);
+      return res.status(401).json({ mensaje: `Token inválido o expirado: ${error.message}` });
+    }
+
     const { idSeller } = req.params;
 
-    console.log(`Recibiendo parámetros - idSeller: ${idSeller}`);
-
-    // Validación básica de los parámetros
     if (!idSeller) {
-      console.log("Falta el parámetro idSeller");
+      console.log("Falta el parámetro idSeller.");
       return res.status(400).json({ mensaje: "Falta el parámetro idSeller" });
     }
 
-    console.log("Realizando consulta SQL");
-
-    // Consulta SQL para obtener los productos ofrecidos por el vendedor
+    // Consulta SQL
+    console.log("Ejecutando consulta SQL...");
     const [productos] = await connection.execute(
       `SELECT 
-        p.nombre AS producto,
-        c.nombre AS categoria,
-        p.cantidadDisponible
-      FROM productos p
-      JOIN categorias c 
-        ON p.idCategoria = c.idCategoria
-      WHERE p.idUsuario = ?;`,
+          p.idProducto,
+          p.nombre AS producto,
+          p.precio,
+          p.cantidadDisponible
+        FROM productos p
+        WHERE p.idVendedor = ?;`,
       [idSeller]
     );
 
-    console.log("Consulta SQL ejecutada, cantidad de productos encontrados:", productos.length);
-
-    // Comprobar si se encontraron productos
+    console.log(`Productos encontrados: ${productos.length}`);
     if (productos.length === 0) {
-      console.log("No se encontraron productos ofrecidos para el vendedor especificado");
       return res
         .status(404)
         .json({ mensaje: "No se encontraron productos ofrecidos para este vendedor" });
     }
 
-    // Responder con los productos ofrecidos
-    console.log("Productos encontrados, enviando respuesta");
+    // Enviar respuesta
+    console.log("Enviando respuesta con productos.");
     res.status(200).json({ productos });
   } catch (error) {
-    console.error("Error al obtener los productos ofrecidos: ", error);
+    console.error("Error al obtener los productos ofrecidos:", error);
     res
       .status(500)
       .json({ mensaje: "Error interno del servidor al obtener los productos ofrecidos" });
   }
 };
-
-
 
 const add_product = async (req, res = response) => {
   const token = req.header('x-token');
