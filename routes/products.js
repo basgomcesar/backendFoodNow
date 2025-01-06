@@ -13,9 +13,7 @@ const {validarJWT} = require('../helpers/validar-jwt');
 
 const router = Router();
 
-
-
-router.get('/statistics/:idSeller/:year/:month', validarJWT, get_statistics_products);
+router.get('/statistics/:idSeller/:year/:month', get_statistics_products);
 router.get('/offered/:idUsuario', validarJWT, get_products_offered);
 router.post("/", upload.single('foto'), validarJWT, add_product);
 router.get("/orderproducts/:idPedido", validarJWT, get_order_product);
