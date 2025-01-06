@@ -26,6 +26,5 @@
     "test:saveUser": "jest tests/controllers/users/save_user.test.js",
     "test:updateUser": "jest tests/controllers/users/update_user.test.js",
     "test:deleteUser": "jest tests/controllers/users/delete_user.test.js"
-
   }
 }
