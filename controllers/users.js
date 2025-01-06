@@ -11,7 +11,6 @@ const save_user = async (req, res = response) => {
 
     const disponibilidadInt = disponibilidad === 'true' ? 1 : 0;
 
-    // Validar que se haya subido un archivo de foto
     if (!req.file) {
       return res.status(400).json({
         success: false,
