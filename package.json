@@ -25,7 +25,9 @@
     "test:addProduct": "jest tests/controllers/products/add_product.test.js",
     "test:saveUser": "jest tests/controllers/users/save_user.test.js",
     "test:updateUser": "jest tests/controllers/users/update_user.test.js",
-    "test:deleteUser": "jest tests/controllers/users/delete_user.test.js"
-
+    "test:deleteUser": "jest tests/controllers/users/delete_user.test.js",
+    "test:getProductsoffered": "jest tests/controllers/users/get_products_offered_product.test.js",
+    "test:getStaticsGraph": "jest tests/controllers/users/get_statistics_product.test.js",
+    "test:updateAvailability": "jest tests/controllers/users/update_availability_user.test.js"
   }
 }
