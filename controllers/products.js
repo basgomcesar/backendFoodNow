@@ -6,7 +6,6 @@ const jwt = require('jsonwebtoken');
 
 const get_statistics_products = async (req, res = response) => {
   try {
-    // Obtener el token desde la cabecera 'x-token'
     const token = req.header('x-token');
     console.log(`Token recibido: ${token}`);
 
@@ -15,7 +14,6 @@ const get_statistics_products = async (req, res = response) => {
       return res.status(401).json({ mensaje: "No se proporcionó el token" });
     }
 
-    // Verificar el token y extraer el UID
     let uid;
     try {
       ({ uid } = jwt.verify(token, SECRET_KEY));
@@ -25,7 +23,6 @@ const get_statistics_products = async (req, res = response) => {
       return res.status(401).json({ mensaje: `Token inválido o expirado: ${error.message}` });
     }
 
-    // Extraer parámetros
     const { idSeller, year, month } = req.params;
     console.log(`Parámetros recibidos - idSeller: ${idSeller}, year: ${year}, month: ${month}`);
 
@@ -39,7 +36,6 @@ const get_statistics_products = async (req, res = response) => {
       return res.status(400).json({ mensaje: "El año y mes deben ser valores numéricos." });
     }
 
-    // Consulta SQL
     console.log("Ejecutando consulta SQL...");
     const [productos] = await connection.execute(
       `SELECT 
@@ -66,7 +62,6 @@ const get_statistics_products = async (req, res = response) => {
       return res.status(404).json({ mensaje: "No se encontraron productos vendidos para este vendedor en el mes y año especificados." });
     }
 
-    // Enviar respuesta
     console.log("Productos encontrados, enviando respuesta.");
     res.status(200).json({ productos });
   } catch (error) {
@@ -78,7 +73,7 @@ const get_statistics_products = async (req, res = response) => {
 const get_products_offered = async (req, res = response) => {
   try {
     const token = req.header('x-token');
-    console.log(`Token recibido: ${token}`); // Log para verificar si el token llega
+    console.log(`Token recibido: ${token}`);
 
     if (!token) {
       console.log("Token no proporcionado.");
@@ -87,7 +82,6 @@ const get_products_offered = async (req, res = response) => {
 
     let uid;
     try {
-      // Verifica el token y extrae el UID
       ({ uid } = jwt.verify(token, SECRET_KEY));
       console.log(`Token verificado. UID extraído: ${uid}`);
     } catch (error) {
@@ -102,7 +96,6 @@ const get_products_offered = async (req, res = response) => {
       return res.status(400).json({ mensaje: "Falta el parámetro idSeller" });
     }
 
-    // Consulta SQL
     console.log("Ejecutando consulta SQL...");
     const [productos] = await connection.execute(
       `SELECT 
@@ -122,7 +115,6 @@ const get_products_offered = async (req, res = response) => {
         .json({ mensaje: "No se encontraron productos ofrecidos para este vendedor" });
     }
 
-    // Enviar respuesta
     console.log("Enviando respuesta con productos.");
     res.status(200).json({ productos });
   } catch (error) {
@@ -145,10 +137,8 @@ const add_product = async (req, res = response) => {
   try {
     const { nombre, descripcion, precio, cantidadDisponible, disponible, categoria } = req.body;
 
-    // Convertir disponible a un entero (1 o 0)
     const disponibleInt = disponible === 'true' ? 1 : 0;
 
-    // Validar que se haya subido un archivo de foto
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -157,8 +147,7 @@ const add_product = async (req, res = response) => {
     }
     const foto = req.file.buffer;
 
-    // Validar el campo precio
-    const precioRegex = /^\d+(\.\d{1,2})?$/; // Número con hasta 2 decimales
+    const precioRegex = /^\d+(\.\d{1,2})?$/; 
     if (!precioRegex.test(precio)) {
       return res.status(422).json({
         success: false,
@@ -167,7 +156,6 @@ const add_product = async (req, res = response) => {
       });
     }
 
-    // Obtener el ID de la categoría basada en el string
     const [categoriaRow] = await connection.execute(
       "SELECT idcategoriaProducto FROM categoriaProducto WHERE categoriaProducto = ?",
       [categoria]
@@ -180,7 +168,6 @@ const add_product = async (req, res = response) => {
     }
     const idcategoriaProducto = categoriaRow[0].idcategoriaProducto;
 
-    // Verificar si el producto ya está registrado para este usuario
     const [existingProduct] = await connection.execute(
       "SELECT * FROM productos WHERE nombre = ? AND idVendedor = ?",
       [nombre, req.uid]
@@ -193,8 +180,6 @@ const add_product = async (req, res = response) => {
       });
     }
 
-    console.log('Categoria: ' + categoria);
-    // Guardar el nuevo producto
     const [resultado] = await connection.execute(
       "INSERT INTO productos (nombre, descripcion, precio, cantidadDisponible, disponible, foto, idcategoriaProducto, idVendedor) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
       [nombre, descripcion, precio, cantidadDisponible, disponibleInt, foto, idcategoriaProducto, req.uid]
@@ -260,11 +245,9 @@ const get_order_product = async (req, res = response) => {
  */
 const update_product = async (req, res = response) => {
   try {
-    const idUsuario = req.uid; // ID del usuario autenticado extraído del token
+    const idUsuario = req.uid; 
     const { idProducto } = req.params;
     const { descripcion, precio, cantidadDisponible } = req.body;
-
-    // Validar que el producto pertenece al usuario autenticado
     const [producto] = await connection.execute(
       "SELECT * FROM productos WHERE idProducto = ? AND idVendedor = ?",
       [idProducto, idUsuario]
@@ -330,10 +313,9 @@ const update_product = async (req, res = response) => {
  */
 const delete_product = async (req, res = response) => {
   try {
-    const idUsuario = req.uid; // ID del usuario autenticado extraído del token
+    const idUsuario = req.uid; 
     const { idProducto } = req.params;
 
-    // Validar que el producto pertenece al usuario autenticado
     const [producto] = await connection.execute(
       "SELECT * FROM productos WHERE idProducto = ? AND idVendedor = ?",
       [idProducto, idUsuario]
