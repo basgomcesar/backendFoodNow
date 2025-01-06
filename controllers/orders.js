@@ -2,7 +2,7 @@ const { response } = require("express");
 const connection = require("../models/database");
 
 const jwt = require("jsonwebtoken");
-const SECRET_KEY = require("../helpers/config");
+const { SECRET_KEY } = require("../helpers/config");
 
 /**
  * Recupera todos los pedidos del usuario autenticado con estado 'activo'
