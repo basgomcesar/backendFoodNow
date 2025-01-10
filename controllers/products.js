@@ -23,10 +23,10 @@ const get_statistics_products = async (req, res = response) => {
       return res.status(401).json({ mensaje: `Token inválido o expirado: ${error.message}` });
     }
 
-    const { idSeller, year, month } = req.params;
-    console.log(`Parámetros recibidos - idSeller: ${idSeller}, year: ${year}, month: ${month}`);
+    const { year, month } = req.params;
+    console.log(`Parámetros recibidos - idSeller: ${uid}, year: ${year}, month: ${month}`);
 
-    if (!idSeller || !year || !month) {
+    if (!uid || !year || !month) {
       console.log("Faltan parámetros requeridos.");
       return res.status(400).json({ mensaje: "Faltan parámetros requeridos: idSeller, year, month" });
     }
@@ -41,37 +41,21 @@ const get_statistics_products = async (req, res = response) => {
       `SELECT 
           p.nombre AS producto, 
           COUNT(ped.idPedido) AS cantidad_vendida
-<<<<<<< HEAD
-       FROM productos p
-       LEFT JOIN pedidos ped 
-         ON p.idProducto = ped.idProducto
-       LEFT JOIN estadoPedido ep 
-         ON ped.idEstadoPedido = ep.idEstadoPedido
-       WHERE 
-         p.idVendedor = ? 
-         AND ep.estadoPedido = 'entregado' 
-         AND MONTH(ped.fechaPedido) = ? 
-         AND YEAR(ped.fechaPedido) = ?
-       GROUP BY p.idProducto
-       ORDER BY cantidad_vendida DESC
-       LIMIT 10;`,
-      [idSeller, month, year]
-    );    
-=======
         FROM productos p
         LEFT JOIN pedidos ped 
           ON p.idProducto = ped.idProducto
+        LEFT JOIN estadopedido ep
+          ON ped.idEstadoPedido = ep.idEstadoPedido
         WHERE 
-          p.idUsuario = ? 
-          AND ped.estado = 'entregado' 
+          p.idVendedor = ? 
+          AND ep.estadoPedido = 'entregado' 
           AND MONTH(ped.fechaPedido) = ? 
           AND YEAR(ped.fechaPedido) = ?
         GROUP BY p.idProducto
         ORDER BY cantidad_vendida DESC
         LIMIT 10;`,
-      [idSeller, month, year]
+      [uid, month, year]
     );
->>>>>>> ae337fffd9fa6b332b3651f8e66834f81a7616e2
 
     console.log(`Consulta ejecutada. Productos encontrados: ${productos.length}`);
 
@@ -80,16 +64,8 @@ const get_statistics_products = async (req, res = response) => {
       return res.status(404).json({ mensaje: "No se encontraron productos vendidos para este vendedor en el mes y año especificados." });
     }
 
-<<<<<<< HEAD
-    console.log('Productos encontrados:', productos);  // Imprime los productos encontrados antes de enviar la respuesta
-
-    console.log('Productos encontrados, enviando respuesta');
-    return res.status(200).json({ productos });
-
-=======
     console.log("Productos encontrados, enviando respuesta.");
     res.status(200).json({ productos });
->>>>>>> ae337fffd9fa6b332b3651f8e66834f81a7616e2
   } catch (error) {
     console.error("Error al obtener las estadísticas de productos:", error);
     res.status(500).json({ mensaje: "Error interno del servidor al obtener las estadísticas de productos." });
