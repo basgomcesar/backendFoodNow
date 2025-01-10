@@ -52,7 +52,6 @@ const save_user = async (req, res = response) => {
       [nombre, correo, contrasenia, idTipoUsuario, disponibilidadInt, foto]
     );
 
-    // Confirmar que el usuario fue guardado exitosamente
     if (resultado.affectedRows > 0) {
       return res.status(201).json({
         success: true,
@@ -110,7 +109,6 @@ const update_user = async (req, res = response) => {
     }
 
     if (correo) {
-      // Verificar si el correo ya está registrado por otro usuario
       const [existingUser] = await connection.execute(
         "SELECT * FROM usuarios WHERE correo = ? AND idUsuario != ?",
         [correo, idUsuario]
@@ -142,7 +140,6 @@ const update_user = async (req, res = response) => {
       values.push(foto);
     }
 
-    // Verificar que haya campos para actualizar
     if (updates.length === 0) {
       return res.status(400).json({
         success: false,
@@ -153,13 +150,11 @@ const update_user = async (req, res = response) => {
     // Agregar idUsuario al final de los valores
     values.push(idUsuario);
 
-    // Ejecutar la consulta de actualización
     const [resultado] = await connection.execute(
       `UPDATE usuarios SET ${updates.join(", ")} WHERE idUsuario = ?`,
       values
     );
 
-    // Verificar si el usuario fue encontrado
     if (resultado.affectedRows === 0) {
       return res.status(404).json({
         success: false,
@@ -167,13 +162,11 @@ const update_user = async (req, res = response) => {
       });
     }
 
-    // Consultar el usuario actualizado
     const [usuarioActualizado] = await connection.execute(
       "SELECT idUsuario, nombre, correo, contrasenia, idTipoUsuario , disponibilidad, foto FROM usuarios WHERE idUsuario = ?",
       [idUsuario]
     );
 
-    // Responder con los datos del usuario actualizado
     return res.status(200).json({
       success: true,
       message: "Usuario actualizado correctamente",
