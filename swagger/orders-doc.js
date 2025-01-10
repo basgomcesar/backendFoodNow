@@ -1,7 +1,16 @@
 /**
  * @swagger
+ * tags:
+ *   - name: Órdenes
+ *     description: Operaciones relacionadas con órdenes
+ */
+
+/**
+ * @swagger
  * /orders/pending/seller:
  *   get:
+ *     tags:
+ *       - Órdenes
  *     summary: Obtener órdenes pendientes por vendedor
  *     description: Obtiene las órdenes pendientes para un vendedor.
  *     parameters:
@@ -43,6 +52,8 @@
  * @swagger
  * /orders/pending/customer:
  *   get:
+ *     tags:
+ *       - Órdenes
  *     summary: Obtener órdenes pendientes por cliente
  *     description: Obtiene las órdenes pendientes para un cliente.
  *     parameters:
@@ -84,6 +95,8 @@
  * @swagger
  * /orders/cancelorder/{idPedido}:
  *   put:
+  *     tags:
+ *       - Órdenes
  *     summary: Cancelar una orden
  *     description: Cancela una orden específica utilizando su ID.
  *     parameters:
@@ -116,6 +129,8 @@
  * @swagger
  * /orders/confirmOrder/{idPedido}:
  *   put:
+*     tags:
+ *       - Órdenes
  *     summary: Confirmar una orden
  *     description: Confirma una orden específica utilizando su ID.
  *     parameters:

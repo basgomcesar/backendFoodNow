@@ -1,7 +1,18 @@
 /**
  * @swagger
+ * tags:
+ *   - name: Usuarios
+ *     description: Operaciones relacionadas con usuarios
+ */
+
+
+
+/**
+ * @swagger
  * /usuarios/{idUsuario}:
  *   get:
+ *     tags:
+ *       - Usuarios
  *     summary: Obtener usuario por ID
  *     description: Obtiene la información de un usuario específico utilizando su ID.
  *     parameters:
@@ -47,6 +58,8 @@
  * @swagger
  * /usuarios/{idUsuario}/disponibilidad:
  *   put:
+ *     tags:
+ *       - Usuarios
  *     summary: Cambiar disponibilidad de un usuario
  *     description: Actualiza el estado de disponibilidad de un usuario utilizando su ID.
  *     parameters:
@@ -83,6 +96,8 @@
  * @swagger
  * /usuarios/{idUsuario}:
  *   put:
+ *     tags:
+ *       - Usuarios
  *     summary: Actualizar disponibilidad y ubicación de un usuario
  *     description: Permite actualizar múltiples campos (disponibilidad y/o ubicación) de un usuario.
  *     parameters:
@@ -148,6 +163,8 @@
  * @swagger
  * /users/save:
  *   post:
+ *     tags:
+ *       - Usuarios
  *     summary: Crear un nuevo usuario
  *     description: Crea un nuevo usuario con los datos proporcionados en el cuerpo de la petición. Es obligatorio enviar una foto del usuario.
  *     requestBody:
@@ -207,6 +224,8 @@
  * @swagger
  * /usuarios:
  *   put:
+ *     tags:
+ *       - Usuarios
  *     summary: Actualizar un usuario
  *     description: Actualiza los detalles de un usuario existente. Los campos opcionales se pueden omitir, pero si se envía una foto, debe ser en formato binario. El ID del usuario se obtiene a partir del token JWT.
  *     security:
@@ -258,6 +277,8 @@
  * @swagger
  * /usuarios:
  *   delete:
+ *     tags:
+ *       - Usuarios
  *     summary: Eliminar un usuario
  *     description: Elimina un usuario existente. El ID del usuario se obtiene a partir del token JWT enviado en el encabezado de la solicitud.
  *     security:

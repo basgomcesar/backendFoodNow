@@ -32,7 +32,6 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '50mb' }));
 app.use(cookieParser());
 
-app.use('/usuarios', require('./routes/usuarios'));
 app.use('/auth', require('./routes/auth'));
 app.use('/products', require('./routes/products'));
 app.use('/utils', require('./routes/utils'));
