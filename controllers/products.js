@@ -74,56 +74,37 @@ const get_statistics_products = async (req, res = response) => {
 
 const get_products_offered = async (req, res = response) => {
   try {
-    const token = req.header('x-token');
-    console.log(`Token recibido: ${token}`);
-
-    if (!token) {
-      console.log("Token no proporcionado.");
-      return res.status(401).json({ mensaje: "No se proporcionó el token" });
-    }
-
-    let uid;
-    try {
-      ({ uid } = jwt.verify(token, SECRET_KEY));
-      console.log(`Token verificado. UID extraído: ${uid}`);
-    } catch (error) {
-      console.error("Error al verificar el token:", error.message);
-      return res.status(401).json({ mensaje: `Token inválido o expirado: ${error.message}` });
-    }
-
-    const { idSeller } = req.params;
-
-    if (!idSeller) {
-      console.log("Falta el parámetro idSeller.");
-      return res.status(400).json({ mensaje: "Falta el parámetro idSeller" });
-    }
-
-    console.log("Ejecutando consulta SQL...");
-    const [productos] = await connection.execute(
-      `SELECT 
+    const [productos] = await connection.execute(`
+      SELECT 
           p.idProducto,
-          p.nombre AS producto,
+          p.nombre AS nombreProducto,
+          p.descripcion,
           p.precio,
-          p.cantidadDisponible
-        FROM productos p
-        WHERE p.idVendedor = ?;`,
-      [idSeller]
-    );
+          p.cantidadDisponible,
+          p.disponible,
+          p.foto,
+          c.categoriaProducto AS categoria,
+          u.nombre AS nombreVendedor,
+          u.correo AS correoVendedor,
+          u.ubicacion AS ubicacionVendedor,
+          u.foto AS fotoVendedor
+      FROM productos p
+      JOIN categoriaProducto c ON p.idcategoriaProducto = c.idcategoriaProducto
+      JOIN usuarios u ON p.idVendedor = u.idUsuario;
+    `);
 
-    console.log(`Productos encontrados: ${productos.length}`);
     if (productos.length === 0) {
       return res
         .status(404)
-        .json({ mensaje: "No se encontraron productos ofrecidos para este vendedor" });
+        .json({ mensaje: "No se encontraron productos registrados" });
     }
 
-    console.log("Enviando respuesta con productos.");
-    res.status(200).json({ productos });
+    return res.status(200).json({ productos });
   } catch (error) {
-    console.error("Error al obtener los productos ofrecidos:", error);
+    console.error("Error al obtener todos los productos:", error);
     res
       .status(500)
-      .json({ mensaje: "Error interno del servidor al obtener los productos ofrecidos" });
+      .json({ mensaje: "Error interno del servidor al obtener los productos" });
   }
 };
 
