@@ -71,50 +71,38 @@ const get_statistics_products = async (req, res = response) => {
 };
 
 const get_products_offered = async (req, res = response) => {
-  const { idUsuario } = req.params;
-
-  // Verificar que idUsuario está definido
-  if (!idUsuario) {
-    return res.status(400).json({
-      message: 'El parámetro idUsuario es requerido y no puede ser undefined.',
-    });
-  }
-
   try {
-    // Asegurarse de que el idUsuario es un número entero
-    const id = parseInt(idUsuario, 10);
-
-    if (isNaN(id)) {
-      return res.status(400).json({
-        message: 'El parámetro idUsuario debe ser un número válido.',
-      });
-    }
-
-    // Consulta SQL solo para nombre del producto, categoría y cantidad disponible
-    const [productos] = await connection.execute(
-      `SELECT 
-        p.nombre AS producto,
-        c.categoriaProducto AS categoria,
-        p.cantidadDisponible
+    const [productos] = await connection.execute(`
+      SELECT 
+          p.idProducto,
+          p.nombre AS nombreProducto,
+          p.descripcion,
+          p.precio,
+          p.cantidadDisponible,
+          p.disponible,
+          p.foto,
+          c.categoriaProducto AS categoria,
+          u.nombre AS nombreVendedor,
+          u.correo AS correoVendedor,
+          u.ubicacion AS ubicacionVendedor,
+          u.foto AS fotoVendedor
       FROM productos p
       JOIN categoriaProducto c ON p.idcategoriaProducto = c.idcategoriaProducto
-      WHERE p.idVendedor = ?`,  // Cambié idUsuario a idVendedor
-      [id]
-    );
+      JOIN usuarios u ON p.idVendedor = u.idUsuario;
+    `);
 
-    console.log(`Productos encontrados: ${productos.length}`);
     if (productos.length === 0) {
       return res
         .status(404)
-        .json({ mensaje: "No se encontraron productos ofrecidos para este vendedor" });
+        .json({ mensaje: "No se encontraron productos registrados" });
     }
 
     return res.status(200).json({ productos });
   } catch (error) {
-    console.error("Error al obtener los productos ofrecidos:", error);
+    console.error("Error al obtener todos los productos:", error);
     res
       .status(500)
-      .json({ mensaje: "Error interno del servidor al obtener los productos ofrecidos" });
+      .json({ mensaje: "Error interno del servidor al obtener los productos" });
   }
 };
 
