@@ -7,25 +7,22 @@ const jwt = require('jsonwebtoken');
 const get_statistics_products = async (req, res = response) => {
   try {
     const token = req.header('x-token');
-    console.log(`Token recibido: ${token}`);
 
     if (!token) {
-      console.log("Token no proporcionado.");
       return res.status(401).json({ mensaje: "No se proporcionó el token" });
     }
 
     let uid;
     try {
       ({ uid } = jwt.verify(token, SECRET_KEY));
-      console.log(`Token verificado. UID extraído: ${uid}`);
     } catch (error) {
       console.error("Error al verificar el token:", error.message);
       return res.status(401).json({ mensaje: `Token inválido o expirado: ${error.message}` });
     }
 
     const { year, month } = req.params;
-    console.log(`Parámetros recibidos - idSeller: ${uid}, year: ${year}, month: ${month}`);
 
+  
     if (!uid || !year || !month) {
       console.log("Faltan parámetros requeridos.");
       return res.status(400).json({ mensaje: "Faltan parámetros requeridos: idSeller, year, month" });
@@ -57,7 +54,6 @@ const get_statistics_products = async (req, res = response) => {
       [uid, month, year]
     );
 
-    console.log(`Consulta ejecutada. Productos encontrados: ${productos.length}`);
 
     if (productos.length === 0) {
       console.log("No se encontraron productos para el vendedor en el mes y año especificados.");
@@ -82,7 +78,6 @@ const get_products_offered = async (req, res = response) => {
           p.precio,
           p.cantidadDisponible,
           p.disponible,
-          p.foto,
           c.categoriaProducto AS categoria,
           u.nombre AS nombreVendedor,
           u.correo AS correoVendedor,
