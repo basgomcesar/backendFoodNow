@@ -71,41 +71,35 @@ const get_statistics_products = async (req, res = response) => {
 };
 
 const get_products_offered = async (req, res = response) => {
+  const { idUsuario } = req.params;
+
+  // Verificar que idUsuario está definido
+  if (!idUsuario) {
+    return res.status(400).json({
+      message: 'El parámetro idUsuario es requerido y no puede ser undefined.',
+    });
+  }
+
   try {
-    const token = req.header('x-token');
-    console.log(`Token recibido: ${token}`);
+    // Asegurarse de que el idUsuario es un número entero
+    const id = parseInt(idUsuario, 10);
 
-    if (!token) {
-      console.log("Token no proporcionado.");
-      return res.status(401).json({ mensaje: "No se proporcionó el token" });
+    if (isNaN(id)) {
+      return res.status(400).json({
+        message: 'El parámetro idUsuario debe ser un número válido.',
+      });
     }
 
-    let uid;
-    try {
-      ({ uid } = jwt.verify(token, SECRET_KEY));
-      console.log(`Token verificado. UID extraído: ${uid}`);
-    } catch (error) {
-      console.error("Error al verificar el token:", error.message);
-      return res.status(401).json({ mensaje: `Token inválido o expirado: ${error.message}` });
-    }
-
-    const { idSeller } = req.params;
-
-    if (!idSeller) {
-      console.log("Falta el parámetro idSeller.");
-      return res.status(400).json({ mensaje: "Falta el parámetro idSeller" });
-    }
-
-    console.log("Ejecutando consulta SQL...");
+    // Consulta SQL solo para nombre del producto, categoría y cantidad disponible
     const [productos] = await connection.execute(
       `SELECT 
-          p.idProducto,
-          p.nombre AS producto,
-          p.precio,
-          p.cantidadDisponible
-        FROM productos p
-        WHERE p.idVendedor = ?;`,
-      [idSeller]
+        p.nombre AS producto,
+        c.categoriaProducto AS categoria,
+        p.cantidadDisponible
+      FROM productos p
+      JOIN categoriaProducto c ON p.idcategoriaProducto = c.idcategoriaProducto
+      WHERE p.idVendedor = ?`,  // Cambié idUsuario a idVendedor
+      [id]
     );
 
     console.log(`Productos encontrados: ${productos.length}`);
@@ -115,8 +109,7 @@ const get_products_offered = async (req, res = response) => {
         .json({ mensaje: "No se encontraron productos ofrecidos para este vendedor" });
     }
 
-    console.log("Enviando respuesta con productos.");
-    res.status(200).json({ productos });
+    return res.status(200).json({ productos });
   } catch (error) {
     console.error("Error al obtener los productos ofrecidos:", error);
     res
