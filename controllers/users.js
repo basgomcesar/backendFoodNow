@@ -216,10 +216,22 @@ const delete_usuario = async (req, res = response) => {
   }
 };
 
-
-
 const change_disponibility = async (req, res = response) => {
   try {
+    const token = req.header('x-token');
+
+    if (!token) {
+      return res.status(401).json({ mensaje: "No se proporcionó el token" });
+    }
+
+    let uid;
+    try {
+      ({ uid } = jwt.verify(token, SECRET_KEY));
+    } catch (error) {
+      console.error("Error al verificar el token:", error.message);
+      return res.status(401).json({ mensaje: `Token inválido o expirado: ${error.message}` });
+    }
+
     const { idUsuario } = req.params;
     const { disponibilidad } = req.body;
 
