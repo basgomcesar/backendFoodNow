@@ -36,11 +36,14 @@ app.use('/auth', require('./routes/auth'));
 app.use('/products', require('./routes/products'));
 app.use('/utils', require('./routes/utils'));
 app.use('/users', require('./routes/users'));
-app.use('/orders',require('./routes/orders'))
+app.use('/orders', require('./routes/orders'));
 
-module.exports = app;
+// Solo iniciar el servidor si no estamos en el entorno de pruebas
+if (process.env.NODE_ENV !== 'test') {
+  const PORT = 3000;
+  app.listen(PORT, () => {
+    console.log(`\nServidor está escuchando en puerto ${PORT}`);
+  });
+}
 
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`\nServidor está escuchando en puerto ${PORT}`);
-});
+module.exports = app; // Exporta la app para las pruebas

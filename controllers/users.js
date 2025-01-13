@@ -260,26 +260,45 @@ const change_disponibility = async (req, res = response) => {
 };
 
 const update_availability = async (req, res = response) => {
-
   try {
+    const token = req.header("x-token");
+
+    if (!token) {
+      return res.status(401).json({ mensaje: "No se proporcionó el token" });
+    }
+
     const { idUsuario } = req.params;
     const { disponibilidad, ubicacion } = req.body;
 
     console.log(req.body);
 
+    // Validar si se proporcionan datos para actualizar
     if (disponibilidad === undefined && ubicacion === undefined) {
       return res
         .status(400)
-        .json({ error: "Se debe proporcionar al menos un campo para actualizar" });
+        .json({ mensaje: "Faltan parámetros requeridos: disponibilidad, ubicacion" });
+    }
+
+    // Validar que disponibilidad sea 1 o 0
+    if (
+      disponibilidad !== undefined &&
+      disponibilidad !== 1 &&
+      disponibilidad !== 0
+    ) {
+      return res.status(400).json({ mensaje: "El valor de disponibilidad no es válido" });
+    }
+
+    // Validar que la ubicación no sea una cadena vacía si está presente
+    if (ubicacion !== undefined && ubicacion.trim() === "") {
+      return res.status(400).json({ mensaje: "El valor de ubicación no es válido" });
     }
 
     const updates = [];
     const values = [];
 
     if (disponibilidad !== undefined) {
-      const disponibilidadBool = disponibilidad === 'true' || disponibilidad === true; // Asegura que el valor sea booleano
       updates.push("disponibilidad = ?");
-      values.push(disponibilidadBool);
+      values.push(disponibilidad);
     }
 
     if (ubicacion !== undefined) {
@@ -289,6 +308,7 @@ const update_availability = async (req, res = response) => {
 
     values.push(idUsuario);
 
+    // Intentar actualizar el usuario
     const [resultado] = await connection.execute(
       `UPDATE usuarios SET ${updates.join(", ")} WHERE idUsuario = ?`,
       values
@@ -298,8 +318,9 @@ const update_availability = async (req, res = response) => {
       return res.status(404).json({ mensaje: "Usuario no encontrado" });
     }
 
+    // Obtener los datos actualizados del usuario
     const [usuarioActualizado] = await connection.execute(
-      "SELECT idUsuario, nombre, correo, contrasenia, tipo, disponibilidad, ubicacion FROM usuarios WHERE idUsuario = ?",
+      "SELECT idUsuario, nombre, correo, contrasenia, disponibilidad, ubicacion FROM usuarios WHERE idUsuario = ?",
       [idUsuario]
     );
 
@@ -308,7 +329,6 @@ const update_availability = async (req, res = response) => {
       nombre: usuarioActualizado[0].nombre,
       correo: usuarioActualizado[0].correo,
       contrasenia: usuarioActualizado[0].contrasenia,
-      tipo: usuarioActualizado[0].tipo,
       disponibilidad: usuarioActualizado[0].disponibilidad,
       ubicacion: usuarioActualizado[0].ubicacion,
       mensaje: "Usuario actualizado correctamente",
@@ -318,6 +338,7 @@ const update_availability = async (req, res = response) => {
     res.status(500).json({ mensaje: "Error interno del servidor" });
   }
 };
+
 
 module.exports = {
   save_user,
