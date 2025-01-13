@@ -22,18 +22,14 @@ const get_statistics_products = async (req, res = response) => {
 
     const { year, month } = req.params;
 
-  
-    if (!uid || !year || !month) {
-      console.log("Faltan parámetros requeridos.");
-      return res.status(400).json({ mensaje: "Faltan parámetros requeridos: idSeller, year, month" });
+    if (!year || !month) {
+      return res.status(400).json({ mensaje: "Faltan parámetros requeridos: year, month" });
     }
 
-    if (isNaN(year) || isNaN(month)) {
-      console.log("Año o mes no son valores numéricos válidos.");
-      return res.status(400).json({ mensaje: "El año y mes deben ser valores numéricos." });
+    if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
+      return res.status(400).json({ mensaje: "El año y mes deben ser valores numéricos válidos y el mes debe estar entre 1 y 12." });
     }
 
-    console.log("Ejecutando consulta SQL...");
     const [productos] = await connection.execute(
       `SELECT 
           p.nombre AS producto, 
@@ -70,6 +66,22 @@ const get_statistics_products = async (req, res = response) => {
 
 const get_products_offered = async (req, res = response) => {
   try {
+    // Validación del token
+    const token = req.header('x-token');
+    if (!token) {
+      return res.status(401).json({ mensaje: 'No se proporcionó el token' });
+    }
+
+    // Verifica el token
+    let uid;
+    try {
+      ({ uid } = jwt.verify(token, SECRET_KEY));
+    } catch (error) {
+      console.error("Error al verificar el token:", error.message);
+      return res.status(401).json({ mensaje: `Token inválido o expirado: ${error.message}` });
+    }
+
+    // Si el token es válido, obtenemos los productos
     const [productos] = await connection.execute(`
       SELECT 
           p.idProducto,
@@ -85,23 +97,26 @@ const get_products_offered = async (req, res = response) => {
           u.foto AS fotoVendedor
       FROM productos p
       JOIN categoriaProducto c ON p.idcategoriaProducto = c.idcategoriaProducto
-      JOIN usuarios u ON p.idVendedor = u.idUsuario;
-    `);
+      JOIN usuarios u ON p.idVendedor = u.idUsuario
+      WHERE p.idVendedor = ?;
+    `, [uid]);
 
-    if (productos.length === 0) {
-      return res
-        .status(404)
-        .json({ mensaje: "No se encontraron productos registrados" });
+    if (!productos || productos.length === 0) {
+      return res.status(404).json({
+        mensaje: 'No se encontraron productos registrados',
+        productos: []
+      });
     }
 
+    // Si hay productos, los retornamos con un código 200
     return res.status(200).json({ productos });
+    
   } catch (error) {
-    console.error("Error al obtener todos los productos:", error);
-    res
-      .status(500)
-      .json({ mensaje: "Error interno del servidor al obtener los productos" });
+    console.error("Error al obtener los productos:", error);
+    return res.status(500).json({ mensaje: "Error interno del servidor al obtener los productos" });
   }
 };
+
 
 const add_product = async (req, res = response) => {
   const token = req.header('x-token');
