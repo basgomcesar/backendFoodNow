@@ -7,7 +7,7 @@ const swaggerOptions = {
   swaggerDefinition: {
     openapi: "3.0.0",
     info: {
-      title: "Documentación de API",
+      title: "Documentación de API - Food Now",
       version: "1.0.0",
       description: "Documentación generada automáticamente con Swagger",
     },
