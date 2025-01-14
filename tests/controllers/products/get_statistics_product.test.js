@@ -1,11 +1,10 @@
 const request = require('supertest');
 const app = require('../../../server');
-const { generarJWT } = require('../../../helpers/generar-jwt'); // Importa la función de JWT
-
+const { generarJWT } = require('../../../helpers/generar-jwt');
 let validToken;
 
 async function obtenerTokenValido() {
-  const token = await generarJWT(1); // Suponiendo que el idUsuario sea 1
+  const token = await generarJWT(1);
   return token;
 }
 
