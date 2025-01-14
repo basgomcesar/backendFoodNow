@@ -6,7 +6,6 @@ describe('GET /offered/:idSeller', () => {
   let validTokenNoProducts;
 
   beforeAll(async () => {
-    // Generar token para un usuario con productos
     try {
       const loginResponse = await request(app)
         .post('/auth/login')
